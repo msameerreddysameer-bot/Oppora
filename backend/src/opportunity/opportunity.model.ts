@@ -1,15 +1,13 @@
 import mongoose from "mongoose";
-import { Schema , model} from "mongoose";
-import {  type Iopportunity } from "./opportunity.types.ts";
+import { Schema, model } from "mongoose";
+import { type Iopportunity } from "./opportunity.types.ts";
 import { string } from "zod";
 import { User } from "../user/user.model.ts";
 
 const opportunitySchema = new Schema<Iopportunity>(
   {
-    organizationLogo:{
-      type:String,
-
-
+    organizationLogo: {
+      type: String,
     },
     category: {
       type: String,
@@ -23,23 +21,21 @@ const opportunitySchema = new Schema<Iopportunity>(
         "open-source",
         "workshop",
       ],
-      index:true
+      index: true,
     },
 
     title: {
       type: String,
       required: true,
-      index:true
+      index: true,
     },
 
     description: {
       type: String,
-      
     },
 
     organization: {
       type: String,
-
     },
 
     organizationType: {
@@ -53,101 +49,104 @@ const opportunitySchema = new Schema<Iopportunity>(
         "non-profit",
         "international-organisation",
       ],
-      index:true
+      index: true,
     },
 
-    requiredDocuments:{
+    requiredDocuments: {
       type: [String],
-      default:[]
+      default: [],
     },
 
-    startDate:{
-        type:Date
+    startDate: {
+      type: Date,
     },
 
-    deadline:{
-        type:Date,
-        index:true
+    deadline: {
+      type: Date,
+      index: true,
     },
 
-    officialSourceUrl:{
-        type:String
+    officialSourceUrl: {
+      type: String,
     },
 
-    eligibility:{
+    eligibility: {
       type: [String],
-      default:[]
+      default: [],
     },
 
-    gender:{
-      type:String,
-      enum:['male','female','other' ,'all'],
-     
-      index:true
-      
+    gender: {
+      type: String,
+      enum: ["male", "female", "other", "all"],
+
+      index: true,
     },
 
-    sourceStatus:{
-        type:String,
-        enum:["live","expired"],
-        default:"live",
-        index:true
+    sourceStatus: {
+      type: String,
+      enum: ["live", "expired"],
+      default: "live",
+      index: true,
     },
 
-    createdBy:{
-        type:Schema.Types.ObjectId,
-        ref:User,
-        index:true
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: User,
+      index: true,
     },
 
-    applicationUrl:{
-        type:String
+    applicationUrl: {
+      type: String,
     },
 
-    lastVerifiedAt:{
-        type:Date,
-        required:true,
-        default:Date.now()
+    lastVerifiedAt: {
+      type: Date,
+      required: true,
+      default: Date.now(),
     },
 
-    benefits:{
+    benefits: {
       type: [String],
-      default:[]
+      default: [],
     },
-    benefitsSummary:{
-      type:String
+    benefitsSummary: {
+      type: String,
     },
-    eligibilitySummary:{
-      type:String
+    eligibilitySummary: {
+      type: String,
     },
-    location:{
-      type:String
+    location: {
+      type: String,
     },
-    educationLevel:{
-      type:String,
-     // required:true,
-      enum:['high-school' , 'diploma' , 'undergraduate' , 'postgraduate' , 'phd' ,'all'],
-      default:"all",
-      index:true
+    educationLevel: {
+      type: String,
+      // required:true,
+      enum: [
+        "high-school",
+        "diploma",
+        "undergraduate",
+        "postgraduate",
+        "phd",
+        "all",
+      ],
+      default: "all",
+      index: true,
     },
 
+    status: {
+      type: String,
+      enum: ["draft", "active", "closed"],
 
-
-    status:{
-        type:String,
-        enum:["draft","active","closed"],
-      
-        default:"draft"
+      default: "draft",
     },
-    publicationStatus:{
-        type:String,
-        enum:["draft","published"],
-        default:"draft",
-        index:true
-    }
- },
+    publicationStatus: {
+      type: String,
+      enum: ["draft", "published"],
+      default: "draft",
+      index: true,
+    },
+  },
   { timestamps: true }
 );
 
-
-export const  Opportunity = model("Opportunity",opportunitySchema)
+export const Opportunity = model("Opportunity", opportunitySchema);

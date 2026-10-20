@@ -16,8 +16,10 @@ import {
 import { Link } from "react-router-dom";
 import StudentLayout from "@/components/layout/StudentLayout";
 import EmptyState from "@/components/shared/EmptyState";
+import ErrorState from "@/components/shared/ErrorState";
+import { TableSkeleton } from "@/components/shared/Skeletons";
 import OrganizationLogo from "@/components/shared/OrganizationLogo";
-import { type DemoApplication } from "@/demo/studentDemoData";
+import { type DemoApplication } from "@/types/studentTypesData";
 import {
   createApplication,
   deleteApplication,
@@ -158,7 +160,7 @@ function TrackApplicationDialog({
 }: TrackApplicationDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOpportunity, setSelectedOpportunity] = useState<any | null>(
-    null,
+    null
   );
   const [status, setStatus] = useState<string>("applied");
   const [results, setResults] = useState<any[]>([]);
@@ -177,16 +179,9 @@ function TrackApplicationDialog({
     const fetchSearchOpportunities = async () => {
       setIsSearching(true);
       try {
-        console.log("Searching opportunities for term:", searchQuery.trim());
-
         const response = await search({
           queryTerm: searchQuery.trim(),
         });
-
-        console.log(
-          "This is the response while clicking search in Track Application:",
-          response,
-        );
 
         if (active) {
           const fetchedResults =
@@ -196,25 +191,15 @@ function TrackApplicationDialog({
             [];
           const list = Array.isArray(fetchedResults) ? fetchedResults : [];
 
-          console.log("Extracted raw opportunities from response:", list);
-
           // Filter out opportunities that have already been applied to
           const unapplied = list.filter(
-            (opp: any) => !appliedOpportunityIds.has(opp._id),
-          );
-
-          console.log(
-            "Filtered opportunities (excluding already applied):",
-            unapplied,
+            (opp: any) => !appliedOpportunityIds.has(opp._id)
           );
 
           setResults(unapplied);
         }
-      } catch (error) {
-        console.error(
-          "Error while searching opportunities in Track Application:",
-          error,
-        );
+      } catch {
+        // Silently clear results on error
       } finally {
         if (active) setIsSearching(false);
       }
@@ -422,9 +407,16 @@ export default function MyApplicationsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [totalResults, setTotalResults] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<"network" | "server" | "generic">(
+    "generic"
+  );
 
   // 1. Initial Load (Page 1): Replaces the list when filters change
   const fetchInitialApplications = async () => {
+    setInitialLoading(true);
+    setError(null);
     try {
       const response = await getUserApplicationsAndsearchAndfilters({
         page: 1,
@@ -448,8 +440,25 @@ export default function MyApplicationsPage() {
       setTotalResults(total);
       setPage(1);
       setHasMore(results.length < total);
-    } catch (error) {
-      console.error("Failed to fetch initial applications:", error);
+    } catch (err: any) {
+      if (
+        err?.code === "ERR_NETWORK" ||
+        err?.code === "ECONNABORTED" ||
+        !err?.response
+      ) {
+        setErrorType("network");
+      } else if (err?.response?.status >= 500) {
+        setErrorType("server");
+      } else {
+        setErrorType("generic");
+      }
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to load applications."
+      );
+    } finally {
+      setInitialLoading(false);
     }
   };
 
@@ -482,10 +491,14 @@ export default function MyApplicationsPage() {
         setApplications((prev) => {
           const existingIds = new Set(prev.map((app) => app._id));
           const uniqueNew = newResults.filter(
-            (app: any) => !existingIds.has(app._id),
+            (app: any) => !existingIds.has(app._id)
           );
           const updated = [...prev, ...uniqueNew];
-          if (updated.length >= totalResults || newResults.length < 10 || uniqueNew.length === 0) {
+          if (
+            updated.length >= totalResults ||
+            newResults.length < 10 ||
+            uniqueNew.length === 0
+          ) {
             reachedEnd = true;
           }
           return updated;
@@ -497,8 +510,8 @@ export default function MyApplicationsPage() {
       } else {
         setHasMore(false);
       }
-    } catch (error) {
-      console.error("Failed to load more applications:", error);
+    } catch {
+      setHasMore(false);
     } finally {
       setIsLoadingMore(false);
     }
@@ -510,7 +523,7 @@ export default function MyApplicationsPage() {
       if (pendingDeleteTimerRef.current) {
         clearTimeout(pendingDeleteTimerRef.current.timer);
         deleteApplication(pendingDeleteTimerRef.current.app._id).catch(
-          console.error,
+          () => {}
         );
       }
     };
@@ -520,7 +533,7 @@ export default function MyApplicationsPage() {
     query.trim() ||
     category !== "all" ||
     organizationType !== "all" ||
-    statusFilter !== "all",
+    statusFilter !== "all"
   );
 
   const fetchApplicationData = async () => {
@@ -533,22 +546,15 @@ export default function MyApplicationsPage() {
         status: statusFilter !== "all" ? statusFilter : undefined,
       });
 
-      console.log(
-        "This is the response while fetching user applications for the table:",
-        response,
-      );
-
       const results =
         response?.data?.results ||
         response?.data?.data?.results ||
         response?.data ||
         [];
 
-      console.log("Parsed applications for table:", results);
-
       setApplications(Array.isArray(results) ? results : []);
-    } catch (error) {
-      console.error("Failed to fetch applications:", error);
+    } catch {
+      // Silently handled
     }
   };
 
@@ -586,7 +592,7 @@ export default function MyApplicationsPage() {
     return new Set<string>(
       applications
         .map((app: any) => app.opportunity || app.opportunityDetails?._id)
-        .filter(Boolean),
+        .filter(Boolean)
     );
   }, [applications]);
 
@@ -595,7 +601,7 @@ export default function MyApplicationsPage() {
     count: applications.filter(
       (app: any) =>
         app.status?.toLowerCase().replace(/\s+/g, "-") ===
-        s.toLowerCase().replace(/\s+/g, "-"),
+        s.toLowerCase().replace(/\s+/g, "-")
     ).length,
   }));
 
@@ -605,18 +611,13 @@ export default function MyApplicationsPage() {
       current.map((application: any) =>
         application._id === id
           ? { ...application, status: newStatus }
-          : application,
-      ),
+          : application
+      )
     );
 
     try {
-      const response = await updateApplication(id, newStatus);
-      console.log(
-        "This is the response while updating application status:",
-        response,
-      );
-    } catch (error) {
-      console.error("Failed to update application status:", error);
+      await updateApplication(id, newStatus);
+    } catch {
       fetchApplicationData();
     }
   }
@@ -624,15 +625,11 @@ export default function MyApplicationsPage() {
   async function addApplication(opportunity: any, chosenStatus: string) {
     try {
       setIsSavingApp(true);
-      const response = await createApplication(opportunity._id, chosenStatus);
-      console.log(
-        "This is the response while adding/tracking an application:",
-        response,
-      );
+      await createApplication(opportunity._id, chosenStatus);
       setTrackOpen(false);
       await fetchApplicationData();
-    } catch (error) {
-      console.error("Failed to add application:", error);
+    } catch {
+      // Handled silently
     } finally {
       setIsSavingApp(false);
     }
@@ -648,9 +645,7 @@ export default function MyApplicationsPage() {
     // Flush previous pending delete if any
     if (pendingDeleteTimerRef.current) {
       clearTimeout(pendingDeleteTimerRef.current.timer);
-      deleteApplication(pendingDeleteTimerRef.current.app._id).catch(
-        console.error,
-      );
+      deleteApplication(pendingDeleteTimerRef.current.app._id).catch(() => {});
     }
 
     const appToDelete = itemToDelete;
@@ -660,20 +655,15 @@ export default function MyApplicationsPage() {
 
     // Optimistically remove from visible state
     setApplications((current: any) =>
-      current.filter((app: any) => app._id !== appId),
+      current.filter((app: any) => app._id !== appId)
     );
 
     // Schedule deletion in backend with 6-second undo window
     const timer = setTimeout(async () => {
       try {
-        const response = await deleteApplication(appId);
-        console.log(
-          "This is the response while deleting application:",
-          response,
-        );
+        await deleteApplication(appId);
         pendingDeleteTimerRef.current = null;
-      } catch (error) {
-        console.error("Failed to delete application:", error);
+      } catch {
         setToast({
           message: "Failed to delete application from server.",
           type: "error",
@@ -754,9 +744,7 @@ export default function MyApplicationsPage() {
                   type="button"
                   onClick={() =>
                     setStatusFilter(
-                      statusFilter.toLowerCase() === s.toLowerCase()
-                        ? "all"
-                        : s,
+                      statusFilter.toLowerCase() === s.toLowerCase() ? "all" : s
                     )
                   }
                   className={`flex flex-col items-start gap-1 rounded-2xl border p-3 text-left transition-all ${
@@ -805,7 +793,7 @@ export default function MyApplicationsPage() {
                     type="button"
                     onClick={() =>
                       setActiveDropdown(
-                        activeDropdown === "category" ? null : "category",
+                        activeDropdown === "category" ? null : "category"
                       )
                     }
                     className={`flex h-11 w-full items-center justify-between gap-2 rounded-xl border px-3.5 text-xs font-medium transition sm:w-auto ${
@@ -862,7 +850,7 @@ export default function MyApplicationsPage() {
                     type="button"
                     onClick={() =>
                       setActiveDropdown(
-                        activeDropdown === "status" ? null : "status",
+                        activeDropdown === "status" ? null : "status"
                       )
                     }
                     className={`flex h-11 w-full items-center justify-between gap-2 rounded-xl border px-3.5 text-xs font-medium transition sm:w-auto ${
@@ -921,7 +909,7 @@ export default function MyApplicationsPage() {
                       setActiveDropdown(
                         activeDropdown === "organisation"
                           ? null
-                          : "organisation",
+                          : "organisation"
                       )
                     }
                     className={`flex h-11 w-full items-center justify-between gap-2 rounded-xl border px-3.5 text-xs font-medium transition sm:w-auto ${
@@ -1045,8 +1033,21 @@ export default function MyApplicationsPage() {
           </div>
         )}
 
-        {/* Applications Content: Table or Empty State */}
-        {applications.length === 0 ? (
+        {/* Applications Content: Skeleton, Error, Empty State, or Table */}
+        {initialLoading ? (
+          <div className="mt-8">
+            <TableSkeleton rows={6} cols={5} />
+          </div>
+        ) : error && applications.length === 0 ? (
+          <div className="mt-8">
+            <ErrorState
+              type={errorType}
+              title="Unable to load applications"
+              message={error}
+              onRetry={fetchInitialApplications}
+            />
+          </div>
+        ) : applications.length === 0 ? (
           <div className="mt-8">
             <EmptyState
               icon={ClipboardList}
@@ -1176,7 +1177,7 @@ export default function MyApplicationsPage() {
                           const opportunity =
                             application.opportunityDetails || {};
                           const currentStyle = getStatusStyle(
-                            application.status,
+                            application.status
                           );
 
                           return (
@@ -1189,7 +1190,9 @@ export default function MyApplicationsPage() {
                                 <div className="flex items-center gap-3">
                                   <OrganizationLogo
                                     src={opportunity.organizationLogo}
-                                    originalSrc={(opportunity as any).originalLogo}
+                                    originalSrc={
+                                      (opportunity as any).originalLogo
+                                    }
                                     crop={(opportunity as any).logoCrop}
                                     organization={opportunity.organization}
                                     initials={opportunity.initials}
@@ -1223,7 +1226,7 @@ export default function MyApplicationsPage() {
                                         <span className="rounded-md border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-[10px] font-medium capitalize text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
                                           {opportunity.organizationType.replace(
                                             /-/g,
-                                            " ",
+                                            " "
                                           )}
                                         </span>
                                       )}
@@ -1239,7 +1242,7 @@ export default function MyApplicationsPage() {
                                   onChange={(event) =>
                                     updateStatus(
                                       application._id,
-                                      event.target.value,
+                                      event.target.value
                                     )
                                   }
                                   className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold capitalize outline-none transition ${currentStyle.bg} ${currentStyle.border}`}
@@ -1343,7 +1346,7 @@ export default function MyApplicationsPage() {
                                   <span className="rounded-md border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-[10px] font-medium capitalize text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
                                     {opportunity.organizationType.replace(
                                       /-/g,
-                                      " ",
+                                      " "
                                     )}
                                   </span>
                                 )}
@@ -1357,7 +1360,7 @@ export default function MyApplicationsPage() {
                               onChange={(event) =>
                                 updateStatus(
                                   application._id,
-                                  event.target.value,
+                                  event.target.value
                                 )
                               }
                               className={`cursor-pointer rounded-full border px-3 py-1 text-xs font-semibold capitalize outline-none transition ${currentStyle.bg} ${currentStyle.border}`}
@@ -1502,8 +1505,8 @@ export default function MyApplicationsPage() {
                   if (pendingDeleteTimerRef.current) {
                     clearTimeout(pendingDeleteTimerRef.current.timer);
                     deleteApplication(
-                      pendingDeleteTimerRef.current.app._id,
-                    ).catch(console.error);
+                      pendingDeleteTimerRef.current.app._id
+                    ).catch(() => {});
                     pendingDeleteTimerRef.current = null;
                   }
                   setToast(null);

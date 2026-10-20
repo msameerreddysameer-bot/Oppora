@@ -1,203 +1,214 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
-  Compass,
   Loader2,
   LogIn,
   Mail,
   Send,
   ShieldCheck,
   X,
-} from "lucide-react"
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom"
-import { resendVerificationEmail, verifyEmail } from "@/services/authApi"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { BackToHomeButton } from "@/components/BackToHomeButton"
-import { cn } from "cn"
+} from "lucide-react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
+import { resendVerificationEmail, verifyEmail } from "@/services/authApi";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { BackToHomeButton } from "@/components/BackToHomeButton";
+import { cn } from "cn";
 
-const RESEND_COOLDOWN = 60
+const RESEND_COOLDOWN = 60;
 
 type VerificationStatus =
   | "verifying"
   | "success"
   | "invalid_token"
   | "awaiting_verification_email"
-  | "missing_token"
+  | "missing_token";
 
 interface ToastNotification {
-  type: "success" | "error" | "info" | "warning"
-  title: string
-  message: string
+  type: "success" | "error" | "info" | "warning";
+  title: string;
+  message: string;
 }
 
 export default function VerifyEmailPage() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [searchParams] = useSearchParams()
-  const token = searchParams.get("token")
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
 
   // Resolve email from navigation state or sessionStorage
   const [resendEmail, setResendEmail] = useState<string>(() => {
-    const stateEmail = (location.state as { email?: string })?.email
-    if (stateEmail) return stateEmail
-    return sessionStorage.getItem("verificationEmail") || ""
-  })
+    const stateEmail = (location.state as { email?: string })?.email;
+    if (stateEmail) return stateEmail;
+    return sessionStorage.getItem("verificationEmail") || "";
+  });
 
   // Determine initial status:
   // 1. If token is in URL -> "verifying"
   // 2. If no token, but user arrived after registering -> "awaiting_verification_email"
   // 3. If no token and no registered email -> "missing_token"
   const [status, setStatus] = useState<VerificationStatus>(() => {
-    if (token) return "verifying"
-    const state = location.state as { isNewRegistration?: boolean; isPendingVerification?: boolean; email?: string } | null
-    const hasRegisteredEmail = !!(state?.email || sessionStorage.getItem("verificationEmail"))
-    if (hasRegisteredEmail || state?.isNewRegistration || state?.isPendingVerification) {
-      return "awaiting_verification_email"
+    if (token) return "verifying";
+    const state = location.state as {
+      isNewRegistration?: boolean;
+      isPendingVerification?: boolean;
+      email?: string;
+    } | null;
+    const hasRegisteredEmail = !!(
+      state?.email || sessionStorage.getItem("verificationEmail")
+    );
+    if (
+      hasRegisteredEmail ||
+      state?.isNewRegistration ||
+      state?.isPendingVerification
+    ) {
+      return "awaiting_verification_email";
     }
-    return "missing_token"
-  })
+    return "missing_token";
+  });
 
-  const [errorMessage, setErrorMessage] = useState<string>("")
-  const [isResending, setIsResending] = useState(false)
-  const [resendSuccess, setResendSuccess] = useState(false)
-  const [resendError, setResendError] = useState("")
-  const [cooldown, setCooldown] = useState(0)
-  const [toast, setToast] = useState<ToastNotification | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+  const [resendError, setResendError] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const [toast, setToast] = useState<ToastNotification | null>(null);
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const hasTriggeredRef = useRef(false)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasTriggeredRef = useRef(false);
 
   // Auto-dismiss toast
   useEffect(() => {
-    if (!toast) return
+    if (!toast) return;
     const timer = setTimeout(() => {
-      setToast(null)
-    }, 4500)
-    return () => clearTimeout(timer)
-  }, [toast])
+      setToast(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Cooldown countdown
   const startCooldown = () => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    setCooldown(RESEND_COOLDOWN)
+    if (timerRef.current) clearInterval(timerRef.current);
+    setCooldown(RESEND_COOLDOWN);
     timerRef.current = setInterval(() => {
       setCooldown((current) => {
         if (current <= 1) {
-          if (timerRef.current) clearInterval(timerRef.current)
-          return 0
+          if (timerRef.current) clearInterval(timerRef.current);
+          return 0;
         }
-        return current - 1
-      })
-    }, 1000)
-  }
+        return current - 1;
+      });
+    }, 1000);
+  };
 
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [])
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   // Start 1-minute cooldown immediately on mount when arriving awaiting verification email
   useEffect(() => {
     if (status === "awaiting_verification_email") {
-      startCooldown()
+      startCooldown();
     }
-  }, [status])
+  }, [status]);
 
   // --------------------------------------------------------------------------
   // BEHAVIOR ON MOUNT: Verify Token if present
   // --------------------------------------------------------------------------
   useEffect(() => {
-    if (!token) return
+    if (!token) return;
 
-    if (hasTriggeredRef.current) return
-    hasTriggeredRef.current = true
+    if (hasTriggeredRef.current) return;
+    hasTriggeredRef.current = true;
 
     const executeVerification = async () => {
-      setStatus("verifying")
+      setStatus("verifying");
       try {
-        console.log("Verifying token with backend...")
-        await verifyEmail(token)
+        await verifyEmail(token);
 
         // 200 OK: Email verified successfully
-        setStatus("success")
+        setStatus("success");
         setToast({
           type: "success",
           title: "Email Verified",
           message: "Email verified successfully! Your account is active.",
-        })
+        });
       } catch (error: any) {
-        console.error("Verification failed:", error)
         const backendMessage =
           error.response?.data?.message ||
-          "This verification link is invalid or has expired."
+          "This verification link is invalid or has expired.";
 
-        setStatus("invalid_token")
-        setErrorMessage(backendMessage)
+        setStatus("invalid_token");
+        setErrorMessage(backendMessage);
 
         setToast({
           type: "error",
           title: "Verification Failed",
           message: backendMessage,
-        })
+        });
       }
-    }
+    };
 
-    executeVerification()
-  }, [token])
+    executeVerification();
+  }, [token]);
 
   // --------------------------------------------------------------------------
   // RESEND VERIFICATION EMAIL HANDLER
   // --------------------------------------------------------------------------
   const handleResend = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-    setResendError("")
-    setResendSuccess(false)
+    if (e) e.preventDefault();
+    setResendError("");
+    setResendSuccess(false);
 
-    const trimmed = resendEmail.trim()
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const trimmed = resendEmail.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!trimmed || !emailRegex.test(trimmed)) {
-      setResendError("Please enter a valid email address.")
-      return
+      setResendError("Please enter a valid email address.");
+      return;
     }
 
-    if (cooldown > 0) return
+    if (cooldown > 0) return;
 
-    setIsResending(true)
+    setIsResending(true);
 
     try {
-      const response = await resendVerificationEmail(trimmed)
+      const response = await resendVerificationEmail(trimmed);
       const msg =
         response?.message ||
-        "A fresh verification link has been sent to your inbox."
+        "A fresh verification link has been sent to your inbox.";
 
-      setResendSuccess(true)
-      startCooldown()
+      setResendSuccess(true);
+      startCooldown();
 
       setToast({
         type: "success",
         title: "Verification Email Sent",
         message: msg,
-      })
+      });
     } catch (error: any) {
-      console.error("Resend verification error:", error)
       const msg =
         error.response?.data?.message ||
-        "We could not resend the verification email. Please check the email and try again."
+        "We could not resend the verification email. Please check the email and try again.";
 
-      setResendError(msg)
+      setResendError(msg);
       setToast({
         type: "error",
         title: "Resend Failed",
         message: msg,
-      })
+      });
     } finally {
-      setIsResending(false)
+      setIsResending(false);
     }
-  }
+  };
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-slate-900 text-white flex flex-col">
@@ -256,11 +267,15 @@ export default function VerifyEmailPage() {
               to="/"
               className="flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-900">
-                <Compass size={18} className="text-white" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white p-1.5 shadow-md shadow-slate-950/40">
+                <img
+                  src="/oppora-logo.svg"
+                  alt="Oppora Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <span className="font-semibold tracking-tight text-white hidden sm:inline">
-                Opportunity Radar
+                Oppora
               </span>
             </Link>
           </div>
@@ -288,7 +303,8 @@ export default function VerifyEmailPage() {
               Verifying your email...
             </h2>
             <p className="text-sm leading-relaxed text-slate-400">
-              Please wait while we confirm your verification link with the server.
+              Please wait while we confirm your verification link with the
+              server.
             </p>
           </div>
         )}
@@ -364,7 +380,7 @@ export default function VerifyEmailPage() {
               </p>
               <div className="flex flex-col gap-2.5">
                 {[
-                  "Open the email from Opportunity Radar",
+                  "Open the email from Oppora",
                   'Click "Verify my email address"',
                   "You will be redirected back to log in",
                 ].map((step, idx) => (
@@ -381,7 +397,8 @@ export default function VerifyEmailPage() {
             {/* Resend Action */}
             <div className="rounded-xl border border-slate-800/80 bg-slate-900/40 p-4 mb-5 text-center">
               <p className="text-xs text-slate-400 mb-3">
-                Didn't receive the email? Check your spam folder or request a new one.
+                Didn't receive the email? Check your spam folder or request a
+                new one.
               </p>
               <Button
                 type="button"
@@ -397,7 +414,10 @@ export default function VerifyEmailPage() {
                   </>
                 ) : cooldown > 0 ? (
                   <>
-                    <Loader2 size={15} className="animate-spin text-amber-400 opacity-60" />
+                    <Loader2
+                      size={15}
+                      className="animate-spin text-amber-400 opacity-60"
+                    />
                     <span>Resend available in {cooldown}s</span>
                   </>
                 ) : (
@@ -410,7 +430,8 @@ export default function VerifyEmailPage() {
 
               {cooldown > 0 && (
                 <p className="mt-2 text-[11px] text-slate-400">
-                  Button is disabled for 1 minute while email arrives ({cooldown}s remaining).
+                  Button is disabled for 1 minute while email arrives (
+                  {cooldown}s remaining).
                 </p>
               )}
 
@@ -425,10 +446,7 @@ export default function VerifyEmailPage() {
             </div>
 
             <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80">
-              <Link
-                to="/login"
-                className="hover:text-white transition-colors"
-              >
+              <Link to="/login" className="hover:text-white transition-colors">
                 ← Back to Login
               </Link>
               <Link
@@ -478,14 +496,16 @@ export default function VerifyEmailPage() {
                     value={resendEmail}
                     disabled={isResending || cooldown > 0}
                     onChange={(e) => {
-                      setResendEmail(e.target.value)
-                      if (resendError) setResendError("")
+                      setResendEmail(e.target.value);
+                      if (resendError) setResendError("");
                     }}
                     className="border-slate-700 bg-slate-950 text-white placeholder-slate-500"
                     required
                   />
                   {resendError && (
-                    <p className="mt-1.5 text-xs text-rose-400">{resendError}</p>
+                    <p className="mt-1.5 text-xs text-rose-400">
+                      {resendError}
+                    </p>
                   )}
                 </div>
 
@@ -525,10 +545,7 @@ export default function VerifyEmailPage() {
             </div>
 
             <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80">
-              <Link
-                to="/login"
-                className="hover:text-white transition-colors"
-              >
+              <Link to="/login" className="hover:text-white transition-colors">
                 ← Back to Login
               </Link>
               <Link
@@ -554,8 +571,8 @@ export default function VerifyEmailPage() {
                 No verification token found in URL
               </h1>
               <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
-                Please click the direct link sent to your email address, or enter
-                your email below to receive a new verification link.
+                Please click the direct link sent to your email address, or
+                enter your email below to receive a new verification link.
               </p>
             </div>
 
@@ -577,14 +594,16 @@ export default function VerifyEmailPage() {
                     value={resendEmail}
                     disabled={isResending || cooldown > 0}
                     onChange={(e) => {
-                      setResendEmail(e.target.value)
-                      if (resendError) setResendError("")
+                      setResendEmail(e.target.value);
+                      if (resendError) setResendError("");
                     }}
                     className="border-slate-700 bg-slate-950 text-white placeholder-slate-500"
                     required
                   />
                   {resendError && (
-                    <p className="mt-1.5 text-xs text-rose-400">{resendError}</p>
+                    <p className="mt-1.5 text-xs text-rose-400">
+                      {resendError}
+                    </p>
                   )}
                 </div>
 
@@ -616,17 +635,15 @@ export default function VerifyEmailPage() {
                 <div className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300">
                   <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
                   <span>
-                    Verification link sent! Please check your inbox and spam folder.
+                    Verification link sent! Please check your inbox and spam
+                    folder.
                   </span>
                 </div>
               )}
             </div>
 
             <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800/80">
-              <Link
-                to="/login"
-                className="hover:text-white transition-colors"
-              >
+              <Link to="/login" className="hover:text-white transition-colors">
                 ← Back to Login
               </Link>
               <Link
@@ -645,10 +662,12 @@ export default function VerifyEmailPage() {
         <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-center gap-4">
           <div className="flex items-center gap-1.5">
             <ShieldCheck size={14} className="text-cyan-400" />
-            <span>Secure account verification powered by Opportunity Radar</span>
+            <span>
+              Secure account verification powered by Oppora
+            </span>
           </div>
         </div>
       </footer>
     </main>
-  )
+  );
 }

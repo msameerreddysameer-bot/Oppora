@@ -32,7 +32,7 @@ export interface IcustomJwtPayloadForAccessToken {
 }
 
 export interface IcustomJwtPayloadForRefreshToken {
-    _id:string
+  _id: string;
 }
 
 //export type verifyVerificationToken = z.infer<typeof verifyVerificationTokenSchema >

@@ -11,17 +11,18 @@ import {
 import { useNavigate } from "react-router-dom";
 import StudentLayout from "@/components/layout/StudentLayout";
 import EmptyState from "@/components/shared/EmptyState";
+import ErrorState from "@/components/shared/ErrorState";
+import { OpportunityGridSkeleton } from "@/components/shared/Skeletons";
 import OpportunityCard from "@/components/student/OpportunityCard";
 import {
- // DEMO_OPPORTUNITIES,
   type IOpportunity,
   type OpportunityEducationLevel,
   type OpportunityGender,
   type OpportunityorganizationType,
   type OpportunitySourceStatus,
-} from "@/demo/studentDemoData";
+} from "@/types/studentTypesData";
 import {
- // checkSavedOpportunity,
+  // checkSavedOpportunity,
   getSavedOpportunitiesByUserIdAndSearch,
   saveOpportinity,
   search,
@@ -63,11 +64,7 @@ const ORGANISATION_OPTIONS: Array<OpportunityorganizationType | "all"> = [
   "international organisation",
 ];
 type FilterKey =
-  | "category"
-  | "gender"
-  | "source"
-  | "organisation"
-  | "education";
+  "category" | "gender" | "source" | "organisation" | "education";
 
 type DiscoverFilters = {
   category: "all" | string;
@@ -243,15 +240,17 @@ interface StudentDashboardPageProps {
   opportunities?: IOpportunity[];
 }
 
-export default function StudentDashboardPage({
- // opportunities = DEMO_OPPORTUNITIES,
-}: StudentDashboardPageProps) {
+export default function StudentDashboardPage(
+  {
+    // opportunities = DEMO_OPPORTUNITIES,
+  }: StudentDashboardPageProps
+) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
- // const [isSaved, setIsSaved] = useState<boolean>(false);
+  // const [isSaved, setIsSaved] = useState<boolean>(false);
   const [savedIds, setSavedIds] = useState<string[]>([
-   // DEMO_OPPORTUNITIES[0]._id,
+    // DEMO_OPPORTUNITIES[0]._id,
   ]);
   const [filters, setFilters] = useState<DiscoverFilters>({
     category: "all",
@@ -261,7 +260,7 @@ export default function StudentDashboardPage({
     educationLevel: "all",
   });
   const [opportunitiesList, setOpportunitiesList] = useState<IOpportunity[]>(
-    [],
+    []
   );
 
   // -------------------------------------------------------------
@@ -272,6 +271,10 @@ export default function StudentDashboardPage({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [totalResults, setTotalResults] = useState(0);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<"network" | "server" | "generic">(
+    "generic"
+  );
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
 
@@ -306,7 +309,7 @@ export default function StudentDashboardPage({
       debouncedQuery,
       filters.educationLevel,
       filters.gender,
-    ],
+    ]
   );
 
   const activeFilterCount =
@@ -323,11 +326,11 @@ export default function StudentDashboardPage({
         const response = await getSavedOpportunitiesByUserIdAndSearch({});
         const userSavedOpportunities = response?.data?.results || [];
         const matchedIds = userSavedOpportunities.map(
-          (item: any) => item.opportunity,
+          (item: any) => item.opportunity
         );
         setSavedIds(matchedIds);
-      } catch (error) {
-        console.error("Failed to load saved opportunity IDs:", error);
+      } catch {
+        // Silently keep savedIds empty on initial error
       }
     };
 
@@ -337,94 +340,96 @@ export default function StudentDashboardPage({
   // -------------------------------------------------------------
   // 1. INITIAL LOAD & FILTER CHANGES (Page 1)
   // -------------------------------------------------------------
-  useEffect(() => {
-    let active = true;
+  const fetchInitialOpportunities = async () => {
+    setInitialLoading(true);
+    setError(null);
+    try {
+      const response = await search({
+        ...addFilters,
+        page: 1,
+        limit: 20,
+      });
 
-    const fetchInitialOpportunities = async () => {
-      setInitialLoading(true);
-      try {
-        console.log("Discover: Fetching initial page 1 with filters:", addFilters);
-        const response = await search({
-          ...addFilters,
-          page: 1,
-          limit: 20,
-        });
+      const results =
+        response?.data?.results ||
+        response?.data?.data?.results ||
+        response?.data ||
+        [];
 
-        console.log("Discover: Page 1 API response:", response);
+      const total =
+        response?.data?.totalResults ??
+        response?.data?.data?.totalResults ??
+        response?.totalResults ??
+        (Array.isArray(results) ? results.length : 0);
 
-        const results =
-          response?.data?.results ||
-          response?.data?.data?.results ||
-          response?.data ||
-          [];
+      // Keep all live opportunities returned from the backend search
+      const apiList = Array.isArray(results) ? results : [];
 
-        const total =
-          response?.data?.totalResults ??
-          response?.data?.data?.totalResults ??
-          response?.totalResults ??
-          (Array.isArray(results) ? results.length : 0);
-
-        if (active) {
-          // Keep all live opportunities returned from the backend search
-          const apiList = Array.isArray(results) ? results : [];
-
-          // Merge locally published opportunities if available
-          let localPubs: IOpportunity[] = [];
-          const localSaved = localStorage.getItem('admin_managed_opportunities');
-          if (localSaved) {
-            try {
-              localPubs = JSON.parse(localSaved).filter(
-                (o: IOpportunity) =>
-                  o.publicationStatus === 'published' ||
-                  (!o.publicationStatus && o.status === 'active')
-              );
-            } catch {
-              localPubs = [];
-            }
-          }
-
-          const existingIds = new Set(apiList.map((o) => o._id));
-          const uniqueLocals = localPubs.filter((o) => !existingIds.has(o._id));
-          const list = [...uniqueLocals, ...apiList];
-
-          setOpportunitiesList(list);
-          setTotalResults(total + uniqueLocals.length);
-          setPage(1);
-          // Enable infinite scroll if there are remaining items to load
-          setHasMore(apiList.length < total && apiList.length >= 20);
-        }
-      } catch (error) {
-        console.error("Discover: Failed to fetch initial opportunities:", error);
-        if (active) {
-          let localPubs: IOpportunity[] = [];
-          const localSaved = localStorage.getItem('admin_managed_opportunities');
-          if (localSaved) {
-            try {
-              localPubs = JSON.parse(localSaved).filter(
-                (o: IOpportunity) =>
-                  o.publicationStatus === 'published' ||
-                  (!o.publicationStatus && o.status === 'active')
-              );
-            } catch {
-              localPubs = [];
-            }
-          }
-          setOpportunitiesList(localPubs);
-          setTotalResults(localPubs.length);
-          setHasMore(false);
-        }
-      } finally {
-        if (active) {
-          setInitialLoading(false);
+      // Merge locally published opportunities if available
+      let localPubs: IOpportunity[] = [];
+      const localSaved = localStorage.getItem("admin_managed_opportunities");
+      if (localSaved) {
+        try {
+          localPubs = JSON.parse(localSaved).filter(
+            (o: IOpportunity) =>
+              o.publicationStatus === "published" ||
+              (!o.publicationStatus && o.status === "active")
+          );
+        } catch {
+          localPubs = [];
         }
       }
-    };
 
+      const existingIds = new Set(apiList.map((o) => o._id));
+      const uniqueLocals = localPubs.filter((o) => !existingIds.has(o._id));
+      const list = [...uniqueLocals, ...apiList];
+
+      setOpportunitiesList(list);
+      setTotalResults(total + uniqueLocals.length);
+      setPage(1);
+      // Enable infinite scroll if there are remaining items to load
+      setHasMore(apiList.length < total && apiList.length >= 20);
+    } catch (err: any) {
+      if (
+        err?.code === "ERR_NETWORK" ||
+        err?.code === "ECONNABORTED" ||
+        !err?.response
+      ) {
+        setErrorType("network");
+      } else if (err?.response?.status >= 500) {
+        setErrorType("server");
+      } else {
+        setErrorType("generic");
+      }
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to load opportunities."
+      );
+
+      let localPubs: IOpportunity[] = [];
+      const localSaved = localStorage.getItem("admin_managed_opportunities");
+      if (localSaved) {
+        try {
+          localPubs = JSON.parse(localSaved).filter(
+            (o: IOpportunity) =>
+              o.publicationStatus === "published" ||
+              (!o.publicationStatus && o.status === "active")
+          );
+        } catch {
+          localPubs = [];
+        }
+      }
+      setOpportunitiesList(localPubs);
+      setTotalResults(localPubs.length);
+      setHasMore(false);
+    } finally {
+      setInitialLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchInitialOpportunities();
-
-    return () => {
-      active = false;
-    };
   }, [addFilters]);
 
   // -------------------------------------------------------------
@@ -437,14 +442,11 @@ export default function StudentDashboardPage({
     setIsLoadingMore(true);
 
     try {
-      console.log(`Discover: Fetching page ${nextPage}...`);
       const response = await search({
         ...addFilters,
         page: nextPage,
         limit: 20,
       });
-
-      console.log(`Discover: Page ${nextPage} API response:`, response);
 
       const newResults =
         response?.data?.results ||
@@ -468,7 +470,11 @@ export default function StudentDashboardPage({
           );
           const updated = [...prev, ...uniqueNew];
 
-          if (updated.length >= total || newResults.length < 20 || uniqueNew.length === 0) {
+          if (
+            updated.length >= total ||
+            newResults.length < 20 ||
+            uniqueNew.length === 0
+          ) {
             reachedEnd = true;
           }
           return updated;
@@ -480,8 +486,7 @@ export default function StudentDashboardPage({
       } else {
         setHasMore(false);
       }
-    } catch (error) {
-      console.error(`Discover: Failed to fetch page ${nextPage}:`, error);
+    } catch {
       setHasMore(false);
     } finally {
       setIsLoadingMore(false);
@@ -492,32 +497,6 @@ export default function StudentDashboardPage({
   // OPPORTUNITIES LIST (Natural backend recently-added order)
   // -------------------------------------------------------------
   const displayedOpportunities = opportunitiesList;
-
-  // const filteredOpportunities = useMemo(() => {
-  //   const text = query.trim().toLowerCase();
-  //   return opportunities
-  //     .filter(
-  //       (opportunity) =>
-  //         (filters.category === "all" ||
-  //           opportunity.category === filters.category) &&
-  //         (filters.gender === "all" || opportunity.gender === filters.gender) &&
-  //         (filters.sourceStatus === "all" ||
-  //           opportunity.sourceStatus === filters.sourceStatus) &&
-  //         (filters.organizationType === "all" ||
-  //           opportunity.organizationType === filters.organizationType) &&
-  //         (!text ||
-  //           `${opportunity.title} ${opportunity.organization} ${opportunity.category}`
-  //             .toLowerCase()
-  //             .includes(text)),
-  //     )
-  //     .sort((first, second) =>
-  //       sort === "deadline"
-  //         ? first.deadline.localeCompare(second.deadline)
-  //         : sort === "newest"
-  //           ? second.title.localeCompare(first.title)
-  //           : first.organization.localeCompare(second.organization),
-  //     );
-  // }, [filters, opportunities, query, sort]);
 
   function resetFilters() {
     setFilters({
@@ -531,58 +510,22 @@ export default function StudentDashboardPage({
   }
 
   function toggleSaved(opportunityId: string) {
-
-
     const saveOrUnSave = async (opportunityId: string) => {
-
-
-      //const currentSavedStatus = isSaved
       try {
         if (!savedIds.includes(opportunityId)) {
-            console.log("👉 3. Calling Save Opportunity with:", opportunityId);
-          const response = await saveOpportinity(opportunityId);
-
-          console.log("response of after saving :", response);
-          setSavedIds((prev) => [...prev,opportunityId])
-
-          //setIsSaved(true);
+          await saveOpportinity(opportunityId);
+          setSavedIds((prev) => [...prev, opportunityId]);
         } else {
-          console.log("👉 3. Calling unSaveOpportunity with:", opportunityId);
-          const response = await unSaveOpportunity(opportunityId);
-          setSavedIds((prev) => prev.filter((id) => id!==opportunityId))
-
-          console.log("response of after un saving :", response);
-
-          //setIsSaved(false);
+          await unSaveOpportunity(opportunityId);
+          setSavedIds((prev) => prev.filter((id) => id !== opportunityId));
         }
-      } catch (error) {
-
-        //setIsSaved(currentSavedStatus)
-        console.log("failed to toggle save or unsave ",error)
+      } catch {
+        // Handled silently
       }
     };
 
-    saveOrUnSave(opportunityId)
+    saveOrUnSave(opportunityId);
   }
-
-  // const CheckIsSaved = async(opportunityId:string) => {
-
-  //   const response = await checkSavedOpportunity(opportunityId)
-
-  //   return response
-
-
-  // } 
-
-  // function toggleSaved(opportunity: IOpportunity) {
-  //   setSavedIds((current) =>
-  //     current.includes(opportunity._id)
-  //       ? current.filter((id) => id !== opportunity._id)
-  //       : [...current, opportunity._id],
-  //   );
-  // }
-
-  console.log("opportunityList:", opportunitiesList);
 
   return (
     <StudentLayout activePage="discover">
@@ -640,23 +583,38 @@ export default function StudentDashboardPage({
                 opportunities
               </p>
             </div>
-            {opportunitiesList.length === 0 ? (
-              initialLoading ? (
-                <div className="flex flex-1 items-center justify-center p-12">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent dark:border-blue-400" />
-                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                      Loading opportunities...
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <EmptyState
-                  icon={Inbox}
-                  title="No opportunities yet"
-                  description="New opportunities will appear here when they are available."
+            {initialLoading ? (
+              <OpportunityGridSkeleton count={6} />
+            ) : error && opportunitiesList.length === 0 ? (
+              <div className="p-6">
+                <ErrorState
+                  type={errorType}
+                  title="Unable to load opportunities"
+                  message={error}
+                  onRetry={fetchInitialOpportunities}
                 />
-              )
+              </div>
+            ) : opportunitiesList.length === 0 ? (
+              <EmptyState
+                icon={Inbox}
+                title="No opportunities found"
+                description={
+                  activeFilterCount > 0 || query
+                    ? "No opportunities match your current search and filter criteria. Try clearing some filters."
+                    : "New opportunities will appear here when they are published."
+                }
+                action={
+                  activeFilterCount > 0 || query ? (
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="inline-flex rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-800"
+                    >
+                      Clear all filters
+                    </button>
+                  ) : undefined
+                }
+              />
             ) : (
               /* Professional Infinite Scroll using Student Layout standard window scroll */
               <InfiniteScroll
@@ -676,7 +634,11 @@ export default function StudentDashboardPage({
                   displayedOpportunities.length > 0 ? (
                     <div className="flex items-center justify-center py-6">
                       <p className="rounded-full bg-slate-100 px-4 py-1.5 text-center text-xs font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        ✨ You've reached the end of curated opportunities ({totalResults > 0 ? totalResults : displayedOpportunities.length} total).
+                        ✨ You've reached the end of curated opportunities (
+                        {totalResults > 0
+                          ? totalResults
+                          : displayedOpportunities.length}{" "}
+                        total).
                       </p>
                     </div>
                   ) : null
@@ -688,10 +650,7 @@ export default function StudentDashboardPage({
                       key={opportunity._id}
                       opportunity={opportunity}
                       saved={savedIds.includes(opportunity._id)}
-                      onToggleSaved={() => {
-                        console.log("👉 1. Card clicked! Sending ID:", opportunity._id);
-                        toggleSaved(opportunity._id);
-                      }}
+                      onToggleSaved={() => toggleSaved(opportunity._id)}
                       onViewDetails={() =>
                         navigate(`/opportunities/${opportunity._id}`)
                       }

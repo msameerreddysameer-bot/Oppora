@@ -12,16 +12,16 @@ import {
 import { isAdmin } from "./user.middleware.ts";
 import { upload } from "../opportunity/opportunity.middleware.ts";
 
+const router = Router();
 
-const router = Router()
+router.route("/profile").get(verifyJWT, getUserProfile);
+router
+  .route("/profile")
+  .put(verifyJWT, upload.single("avatar"), updateUserProfileDetails);
+router.route("/").get(verifyJWT, isAdmin, fetchAllUsers);
+router.route("/search").get(verifyJWT, isAdmin, searchAndFilterUsers);
+router.route("/admins").get(verifyJWT, isAdmin, fetchAllAdmins);
+router.route("/toggle-role").patch(verifyJWT, isAdmin, toogleUserRoleByEmail);
+router.route("/:id").get(verifyJWT, isAdmin, getUserById);
 
-router.route("/profile").get(verifyJWT,getUserProfile);
-router.route("/profile").put(verifyJWT,upload.single('avatar'),updateUserProfileDetails);
-router.route("/").get(verifyJWT,isAdmin,fetchAllUsers);
-router.route("/search").get(verifyJWT,isAdmin,searchAndFilterUsers);
-router.route("/admins").get(verifyJWT,isAdmin,fetchAllAdmins);
-router.route("/toggle-role").patch(verifyJWT,isAdmin,toogleUserRoleByEmail);
-router.route("/:id").get(verifyJWT,isAdmin,getUserById);
-
-export default router
-
+export default router;

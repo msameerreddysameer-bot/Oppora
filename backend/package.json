@@ -15,7 +15,11 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon --exec tsx -r dotenv/config  src/server.ts  "
+    "dev": "nodemon --exec tsx -r dotenv/config src/server.ts",
+    "build": "tsc",
+    "start": "tsx src/server.ts",
+    "format": "prettier --write \"src/**/*.{ts,js,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,js,json}\""
   },
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
@@ -33,7 +37,7 @@
     "multer": "^2.4.0",
     "node-cron": "^4.6.0",
     "resend": "^6.25.0",
-    "save-dev": "^0.0.1-security",
+    "tsx": "^4.23.12",
     "zod": "^4.5.4"
   },
   "devDependencies": {
@@ -44,7 +48,6 @@
     "nodemon": "^3.1.14",
     "prettier": "3.9.6",
     "ts-node": "^10.9.2",
-    "tsx": "^4.23.12",
     "typescript": "^7.0.2"
   }
 }

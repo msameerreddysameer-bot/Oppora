@@ -86,10 +86,7 @@ const createOpportunity = asyncHandler(async (req, res) => {
   });
 
   if (!opportunity) {
-    throw new ApiError(
-      500,
-      "Failed to create opportunity"
-    );
+    throw new ApiError(500, "Failed to create opportunity");
   }
 
   res
@@ -100,7 +97,6 @@ const createOpportunity = asyncHandler(async (req, res) => {
 });
 
 const editOpportunity = asyncHandler(async (req, res) => {
-  
   const validateData = editOpportunitySchema.safeParse(req.body ?? {});
 
   const { id } = req.params;
@@ -133,11 +129,10 @@ const editOpportunity = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid opportunity ID");
   }
 
-  const updateFields :  Record<string, any> = {
+  const updateFields: Record<string, any> = {
     ...validateData.data,
     lastVerifiedAt: new Date(),
-
-  }
+  };
 
   if (req.file) {
     const organizationLogoLocalPath = req.file?.path;
@@ -157,12 +152,12 @@ const editOpportunity = asyncHandler(async (req, res) => {
       );
     }
 
-    updateFields.organizationLogo = organizationLogo.secure_url
+    updateFields.organizationLogo = organizationLogo.secure_url;
   }
   const opportunity = await Opportunity.findByIdAndUpdate(
     id,
     {
-      $set: updateFields
+      $set: updateFields,
     },
     {
       returnDocument: "after",
@@ -176,7 +171,9 @@ const editOpportunity = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, opportunity, "Opportunity updated successfully"));
+    .json(
+      new ApiResponse(200, opportunity, "Opportunity updated successfully")
+    );
 });
 
 const deleteOpportunity = asyncHandler(async (req, res) => {
@@ -250,9 +247,11 @@ const searchAndFilterOpportunity = asyncHandler(async (req, res) => {
   }
 
   if (category) {
+    const normalizedCategory =
+      category.toLowerCase() === "internship" ? "intership" : category;
     filterClauses.push({
       phrase: {
-        query: category,
+        query: normalizedCategory,
         path: "category",
       },
     });
@@ -297,7 +296,7 @@ const searchAndFilterOpportunity = asyncHandler(async (req, res) => {
     });
   }
 
-   if (mustClauses.length === 0 && filterClauses.length === 0) {
+  if (mustClauses.length === 0 && filterClauses.length === 0) {
     mustClauses.push({
       wildcard: {
         query: "*",
@@ -353,20 +352,18 @@ const searchAndFilterOpportunity = asyncHandler(async (req, res) => {
 
   const paginatedResults = (results as any).paginatedResults || [];
 
-  res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          results: paginatedResults,
-          page,
-          limit,
-          totalResults: (results as any).totalCount?.[0]?.count || 0,
-        },
-        "search results fetched successfully"
-      )
-    );
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        results: paginatedResults,
+        page,
+        limit,
+        totalResults: (results as any).totalCount?.[0]?.count || 0,
+      },
+      "search results fetched successfully"
+    )
+  );
 });
 
 const getOpportunitiesBystatus = asyncHandler(async (req, res) => {

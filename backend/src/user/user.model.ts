@@ -3,15 +3,14 @@ import type { IUser } from "./user.types.ts";
 import bcrypt from "bcrypt";
 import type { NextFunction } from "express";
 import type { Document } from "mongoose";
-import  jwt  from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { env } from "./user.validation.js";
 import { boolean, string } from "zod";
 
 const userSchema = new Schema<IUser>(
   {
-
-    avatar:{
-      type:String
+    avatar: {
+      type: String,
     },
 
     FullName: {
@@ -55,76 +54,67 @@ const userSchema = new Schema<IUser>(
       index: true,
     },
 
-    refreshToken:{
-        type:String
+    refreshToken: {
+      type: String,
     },
 
     skills: {
-        type:[String],
-        index:true,
-        default:[]
+      type: [String],
+      index: true,
+      default: [],
     },
 
     interests: {
-        type:[String],
-        index:true,
-        default:[]
+      type: [String],
+      index: true,
+      default: [],
     },
 
-    isEmailVerified:{
-      type:Boolean
-
-    }
+    isEmailVerified: {
+      type: Boolean,
+    },
   },
   {
-    timestamps:true,
+    timestamps: true,
   }
 );
 
-userSchema.pre("save",async function () {
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
 
-    if (!this.isModified("password")) return ;
-
-    let combinedPassword = this.password + env.PASSWORD_PEPPER
-    this.password =await  bcrypt.hash(combinedPassword,10)
-    ;
-    
-})
+  let combinedPassword = this.password + env.PASSWORD_PEPPER;
+  this.password = await bcrypt.hash(combinedPassword, 10);
+});
 
 userSchema.methods.isPasswordCorrect = async function (password: string) {
   const combinedPassword = password + env.PASSWORD_PEPPER;
   return await bcrypt.compare(combinedPassword, this.password);
 };
 
-userSchema.methods.generateAccessToken = function(this:IUser) {
-    return jwt.sign(
-        {
-            _id:(this as any)._id,
-            email:this.email,
-            FullName:this.FullName
-        },
-        env.ACCESS_TOKEN_SECRET as string,
-        {
-            expiresIn:env.ACCESS_TOKEN_EXPIRY  as any
-        }
+userSchema.methods.generateAccessToken = function (this: IUser) {
+  return jwt.sign(
+    {
+      _id: (this as any)._id,
+      email: this.email,
+      FullName: this.FullName,
+    },
+    env.ACCESS_TOKEN_SECRET as string,
+    {
+      expiresIn: env.ACCESS_TOKEN_EXPIRY as any,
+    }
+  );
+};
 
-    )
-}
-
-userSchema.methods.generateRefreshToken = function(this:IUser ) {
-    return jwt.sign(
-        {
-            _id:(this as any)._id
-        },
-        env.REFRESH_TOKEN_SECRET as string,
-        {
-            expiresIn:env.REFRESH_TOKEN__EXPIRY as any
-        }
-
-    )
-}
-
-
-
+userSchema.methods.generateRefreshToken = function (this: IUser) {
+  return jwt.sign(
+    {
+      _id: (this as any)._id,
+    },
+    env.REFRESH_TOKEN_SECRET as string,
+    {
+      expiresIn: env.REFRESH_TOKEN__EXPIRY as any,
+    }
+  );
+};
 
 export const User = model<IUser>("User", userSchema);

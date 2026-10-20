@@ -108,34 +108,32 @@ const updateApplication = asyncHandler(async (req, res) => {
 });
 
 const deleteApplication = asyncHandler(async (req, res) => {
-    const { applicationId } = req.params;
+  const { applicationId } = req.params;
 
-    if (!applicationId) {
-      throw new ApiError(400, "Application ID is required");
-    }
+  if (!applicationId) {
+    throw new ApiError(400, "Application ID is required");
+  }
 
-    if (!isValidObjectId(applicationId)) {
-      throw new ApiError(400, "Invalid application ID");
-    }
+  if (!isValidObjectId(applicationId)) {
+    throw new ApiError(400, "Invalid application ID");
+  }
 
-    const deletedApplication =
-      await Application.findByIdAndDelete(applicationId);
+  const deletedApplication = await Application.findByIdAndDelete(applicationId);
 
-    if (!deletedApplication) {
-      throw new ApiError(404, "Application not found");
-    }
+  if (!deletedApplication) {
+    throw new ApiError(404, "Application not found");
+  }
 
-    res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          deletedApplication,
-          "Application deleted successfully"
-        )
-      );
-  })
-
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        deletedApplication,
+        "Application deleted successfully"
+      )
+    );
+});
 
 const getApplicationById = asyncHandler(async (req, res) => {
   const { applicationId } = req.params;
@@ -161,12 +159,12 @@ const getApplicationById = asyncHandler(async (req, res) => {
     );
 });
 
-
 const getUserApplicationsAndsearchAndfilters = asyncHandler(
   async (req, res) => {
     // Validate query parameters
-    const validateData =
-      getUserApplicationsAndsearchAndfiltersSchema.safeParse(req.query);
+    const validateData = getUserApplicationsAndsearchAndfiltersSchema.safeParse(
+      req.query
+    );
 
     if (!validateData.success) {
       throw new ApiError(
@@ -185,15 +183,11 @@ const getUserApplicationsAndsearchAndfilters = asyncHandler(
       organizationType,
     } = validateData.data;
 
-
-
     // Calculate pagination offset
     const skip = (page - 1) * limit;
 
     // Get logged-in user ID
-    const userId = new mongoose.Types.ObjectId(
-      (req as any).user._id
-    );
+    const userId = new mongoose.Types.ObjectId((req as any).user._id);
 
     // Store Atlas Search conditions
     const mustClauses: any[] = [];
@@ -240,22 +234,22 @@ const getUserApplicationsAndsearchAndfilters = asyncHandler(
 
     // Build Atlas Search stage using the same working structure
     const hasSearchOrFilters =
-  mustClauses.length > 0 || filterClauses.length > 0;
+      mustClauses.length > 0 || filterClauses.length > 0;
 
-const searchStage = hasSearchOrFilters
-  ? {
-      index: "search_opportunities",
-      compound: {
-        ...(mustClauses.length > 0 ? { must: mustClauses } : {}),
-        ...(filterClauses.length > 0 ? { filter: filterClauses } : {}),
-      },
-    }
-  : {
-      index: "search_opportunities",
-      exists: {
-        path: "title",
-      },
-    };
+    const searchStage = hasSearchOrFilters
+      ? {
+          index: "search_opportunities",
+          compound: {
+            ...(mustClauses.length > 0 ? { must: mustClauses } : {}),
+            ...(filterClauses.length > 0 ? { filter: filterClauses } : {}),
+          },
+        }
+      : {
+          index: "search_opportunities",
+          exists: {
+            path: "title",
+          },
+        };
 
     // Build aggregation pipeline starting from Opportunity
     const pipeline: any[] = [
@@ -278,10 +272,7 @@ const searchStage = hasSearchOrFilters
                   $and: [
                     // Application belongs to this opportunity
                     {
-                      $eq: [
-                        "$opportunity",
-                        "$$opportunityId",
-                      ],
+                      $eq: ["$opportunity", "$$opportunityId"],
                     },
 
                     // Application belongs to current user
@@ -347,6 +338,9 @@ const searchStage = hasSearchOrFilters
           category: "$category",
           organization: "$organization",
           organizationType: "$organizationType",
+          organizationLogo: "$organizationLogo",
+          originalLogo: "$originalLogo",
+          logoCrop: "$logoCrop",
           eligibility: "$eligibility",
           benefits: "$benefits",
           requiredDocuments: "$requiredDocuments",
@@ -358,6 +352,9 @@ const searchStage = hasSearchOrFilters
           lastVerifiedAt: "$lastVerifiedAt",
           gender: "$gender",
           educationLevel: "$educationLevel",
+          location: "$location",
+          benefitsSummary: "$benefitsSummary",
+          eligibilitySummary: "$eligibilitySummary",
           createdBy: "$createdBy",
           createdAt: "$createdAt",
           updatedAt: "$updatedAt",
@@ -393,12 +390,10 @@ const searchStage = hasSearchOrFilters
     const [results] = await Opportunity.aggregate(pipeline);
 
     // Get paginated results safely
-    const paginatedResults =
-      results?.paginatedResults || [];
+    const paginatedResults = results?.paginatedResults || [];
 
     // Get total result count safely
-    const totalResults =
-      results?.totalCount?.[0]?.count || 0;
+    const totalResults = results?.totalCount?.[0]?.count || 0;
 
     // Send response
     res.status(200).json(

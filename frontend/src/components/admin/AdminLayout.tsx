@@ -1,24 +1,24 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Briefcase,
-  Compass,
   LayoutDashboard,
   LogOut,
   Menu,
   PlusCircle,
   Users,
   X,
-} from 'lucide-react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/components/AuthContext'
+} from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/components/AuthContext";
 
-export type AdminTab = 'dashboard' | 'opportunities' | 'create' | 'users' | 'profile'
+export type AdminTab =
+  "dashboard" | "opportunities" | "create" | "users" | "profile";
 
 interface AdminLayoutProps {
-  children: ReactNode
-  activeTab?: AdminTab
-  onTabChange?: (tab: AdminTab) => void
-  onCreateOpportunity?: () => void
+  children: ReactNode;
+  activeTab?: AdminTab;
+  onTabChange?: (tab: AdminTab) => void;
+  onCreateOpportunity?: () => void;
 }
 
 export default function AdminLayout({
@@ -27,122 +27,140 @@ export default function AdminLayout({
   onTabChange,
   onCreateOpportunity: _onCreateOpportunity,
 }: AdminLayoutProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { user, logout: authLogout } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, logout: authLogout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Detect active tab from pathname
   const currentTab: AdminTab =
     activeTab ||
-    (location.pathname.includes('/users')
-      ? 'users'
-      : location.pathname.includes('create')
-      ? 'create'
-      : location.pathname.includes('/opportunities')
-      ? 'opportunities'
-      : location.pathname.includes('/profile')
-      ? 'profile'
-      : 'dashboard')
+    (location.pathname.includes("/users")
+      ? "users"
+      : location.pathname.includes("create")
+        ? "create"
+        : location.pathname.includes("/opportunities")
+          ? "opportunities"
+          : location.pathname.includes("/profile")
+            ? "profile"
+            : "dashboard");
 
   const [profileName, setProfileName] = useState<string>(() => {
     return (
-      localStorage.getItem('admin_profile_name') ||
+      localStorage.getItem("admin_profile_name") ||
       user?.FullName ||
       user?.fullName ||
       user?.name ||
-      'Administrator'
-    )
-  })
+      "Administrator"
+    );
+  });
 
   const cleanAvatarUrl = (url?: string | null) => {
-    if (!url) return null
-    if (url.includes('images.unsplash.com/photo-1534528741775-53994a69daeb')) return null
-    return url
-  }
+    if (!url) return null;
+    if (url.includes("images.unsplash.com/photo-1534528741775-53994a69daeb"))
+      return null;
+    return url;
+  };
 
   const [profileAvatar, setProfileAvatar] = useState<string | null>(() => {
     const raw =
-      localStorage.getItem('admin_profile_avatar') ||
-      (typeof user?.avatar === 'string' ? user.avatar : user?.avatar?.url) ||
+      localStorage.getItem("admin_profile_avatar") ||
+      (typeof user?.avatar === "string" ? user.avatar : user?.avatar?.url) ||
       user?.avatarUrl ||
       user?.profilePicture ||
-      null
-    return cleanAvatarUrl(raw)
-  })
+      null;
+    return cleanAvatarUrl(raw);
+  });
 
   useEffect(() => {
     const handleProfileSync = () => {
-      const savedName = localStorage.getItem('admin_profile_name')
-      if (savedName) setProfileName(savedName)
-      const savedAvatar = localStorage.getItem('admin_profile_avatar')
-      setProfileAvatar(cleanAvatarUrl(savedAvatar))
-    }
-    window.addEventListener('admin-profile-updated', handleProfileSync)
+      const savedName = localStorage.getItem("admin_profile_name");
+      if (savedName) setProfileName(savedName);
+      const savedAvatar = localStorage.getItem("admin_profile_avatar");
+      setProfileAvatar(cleanAvatarUrl(savedAvatar));
+    };
+    window.addEventListener("admin-profile-updated", handleProfileSync);
     return () => {
-      window.removeEventListener('admin-profile-updated', handleProfileSync)
-    }
-  }, [])
+      window.removeEventListener("admin-profile-updated", handleProfileSync);
+    };
+  }, []);
 
   // Auto-sync avatar and name whenever user loads or updates from AuthContext
   useEffect(() => {
     if (user) {
       const name =
-        localStorage.getItem('admin_profile_name') ||
+        localStorage.getItem("admin_profile_name") ||
         user?.FullName ||
         user?.fullName ||
-        user?.name
-      if (name) setProfileName(name)
+        user?.name;
+      if (name) setProfileName(name);
 
       const avatar =
-        cleanAvatarUrl(localStorage.getItem('admin_profile_avatar')) ||
-        cleanAvatarUrl(typeof user?.avatar === 'string' ? user.avatar : user?.avatar?.url) ||
+        cleanAvatarUrl(localStorage.getItem("admin_profile_avatar")) ||
+        cleanAvatarUrl(
+          typeof user?.avatar === "string" ? user.avatar : user?.avatar?.url
+        ) ||
         cleanAvatarUrl(user?.avatarUrl) ||
-        cleanAvatarUrl(user?.profilePicture)
+        cleanAvatarUrl(user?.profilePicture);
       if (avatar) {
-        setProfileAvatar(avatar)
+        setProfileAvatar(avatar);
       }
     }
-  }, [user])
+  }, [user]);
 
   // Left Sidebar navigation items (Dashboard, Opportunities, Create Opportunity, Users)
   const navItems: Array<{
-    id: AdminTab
-    label: string
-    href: string
-    icon: typeof LayoutDashboard
-    badge?: string | number
+    id: AdminTab;
+    label: string;
+    href: string;
+    icon: typeof LayoutDashboard;
+    badge?: string | number;
   }> = [
-    { id: 'dashboard', label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { id: 'opportunities', label: 'Opportunities', href: '/admin/opportunities', icon: Briefcase },
-    { id: 'create', label: 'Create Opportunity', href: '/admin/create-opportunity', icon: PlusCircle },
-    { id: 'users', label: 'Users', href: '/admin/users', icon: Users },
-  ]
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      href: "/admin",
+      icon: LayoutDashboard,
+    },
+    {
+      id: "opportunities",
+      label: "Opportunities",
+      href: "/admin/opportunities",
+      icon: Briefcase,
+    },
+    {
+      id: "create",
+      label: "Create Opportunity",
+      href: "/admin/create-opportunity",
+      icon: PlusCircle,
+    },
+    { id: "users", label: "Users", href: "/admin/users", icon: Users },
+  ];
 
-  const displayName = profileName
-  const displayEmail = user?.email || 'admin@opportunityradar.org'
-  const displayAvatar = profileAvatar
+  const displayName = profileName;
+  const displayEmail = user?.email || "admin@opportunityradar.org";
+  const displayAvatar = profileAvatar;
 
   const handleLogout = async () => {
     try {
       if (authLogout) {
-        await authLogout()
+        await authLogout();
       }
-    } catch (err) {
-      console.error('Logout error:', err)
+    } catch {
+      // Proceed with local cleanup and redirect
     } finally {
-      localStorage.removeItem('admin_profile_avatar')
-      navigate('/login')
+      localStorage.removeItem("admin_profile_avatar");
+      navigate("/login");
     }
-  }
+  };
 
   const handleNavClick = (tab: AdminTab, href: string) => {
-    setMobileMenuOpen(false)
+    setMobileMenuOpen(false);
     if (onTabChange) {
-      onTabChange(tab)
+      onTabChange(tab);
     }
-    navigate(href)
-  }
+    navigate(href);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col antialiased">
@@ -164,8 +182,12 @@ export default function AdminLayout({
             to="/admin"
             className="flex items-center gap-2.5 transition-opacity hover:opacity-95"
           >
-            <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 shadow-md shadow-blue-500/20 shrink-0">
-              <Compass size={17} className="text-white" />
+            <div className="relative flex h-8 w-8 items-center justify-center rounded-xl bg-white p-1.5 shadow-md shadow-slate-950/40 shrink-0">
+              <img
+                src="/oppora-logo.svg"
+                alt="Oppora Logo"
+                className="w-full h-full object-contain"
+              />
               <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400 ring-2 ring-[#0B1528]" />
@@ -173,7 +195,7 @@ export default function AdminLayout({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold tracking-tight text-white whitespace-nowrap">
-                Opportunity Radar
+                Oppora
               </span>
               <span className="rounded-md bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-cyan-300 ring-1 ring-cyan-500/30">
                 ADMIN
@@ -187,7 +209,7 @@ export default function AdminLayout({
           {/* Administrator Photo/Name Area (Click opens Admin Profile Page directly) */}
           <button
             type="button"
-            onClick={() => navigate('/admin/profile')}
+            onClick={() => navigate("/admin/profile")}
             className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 py-1 px-1.5 sm:pr-3 text-left hover:border-white/30 hover:bg-white/10 transition-colors group cursor-pointer"
             title="Open Admin Profile"
             aria-label="Admin Profile"
@@ -214,7 +236,9 @@ export default function AdminLayout({
               <div className="text-xs font-semibold text-white leading-tight group-hover:text-cyan-300 transition-colors">
                 {displayName}
               </div>
-              <div className="text-[10px] text-slate-300 truncate max-w-[140px]">{displayEmail}</div>
+              <div className="text-[10px] text-slate-300 truncate max-w-[140px]">
+                {displayEmail}
+              </div>
             </div>
           </button>
 
@@ -241,8 +265,8 @@ export default function AdminLayout({
             </div>
             <nav className="space-y-1">
               {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = currentTab === item.id
+                const Icon = item.icon;
+                const isActive = currentTab === item.id;
                 return (
                   <button
                     key={item.id}
@@ -250,43 +274,39 @@ export default function AdminLayout({
                     onClick={() => handleNavClick(item.id, item.href)}
                     className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition-all ${
                       isActive
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/80'
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800/80"
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <Icon size={16} className={isActive ? 'text-white' : 'text-slate-400 dark:text-slate-400'} />
+                      <Icon
+                        size={16}
+                        className={
+                          isActive
+                            ? "text-white"
+                            : "text-slate-400 dark:text-slate-400"
+                        }
+                      />
                       <span>{item.label}</span>
                     </div>
                     {item.badge !== undefined && (
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                           isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-blue-50 text-blue-600 ring-1 ring-blue-500/20 dark:bg-blue-500/20 dark:text-cyan-300 dark:ring-cyan-500/30'
+                            ? "bg-white/20 text-white"
+                            : "bg-blue-50 text-blue-600 ring-1 ring-blue-500/20 dark:bg-blue-500/20 dark:text-cyan-300 dark:ring-cyan-500/30"
                         }`}
                       >
                         {item.badge}
                       </span>
                     )}
                   </button>
-                )
+                );
               })}
             </nav>
           </div>
 
-          {/* Sidebar Footer: System Status */}
-          <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 p-3">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-cyan-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-cyan-400 animate-pulse" />
-                <span>Database Online</span>
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
-                Live opportunity indexing synchronized.
-              </p>
-            </div>
-          </div>
+         
         </aside>
 
         {/* 3. Main Admin Content: p-5 on smaller screens, sm:p-7 on larger screens */}
@@ -306,10 +326,16 @@ export default function AdminLayout({
             <div className="space-y-6">
               <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-blue-600 flex items-center justify-center text-white">
-                    <Compass size={16} />
+                  <div className="h-7 w-7 rounded-lg bg-white p-1 flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
+                    <img
+                      src="/oppora-logo.svg"
+                      alt="Oppora Logo"
+                      className="w-full h-full object-contain"
+                    />
                   </div>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">Opportunity Radar</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">
+                    Oppora
+                  </span>
                 </div>
                 <button
                   type="button"
@@ -323,8 +349,8 @@ export default function AdminLayout({
 
               <nav className="space-y-1">
                 {navItems.map((item) => {
-                  const Icon = item.icon
-                  const isActive = currentTab === item.id
+                  const Icon = item.icon;
+                  const isActive = currentTab === item.id;
                   return (
                     <button
                       key={item.id}
@@ -332,8 +358,8 @@ export default function AdminLayout({
                       onClick={() => handleNavClick(item.id, item.href)}
                       className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-xs font-semibold transition-colors ${
                         isActive
-                          ? 'bg-blue-600 text-white shadow-sm'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
+                          ? "bg-blue-600 text-white shadow-sm"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
@@ -346,7 +372,7 @@ export default function AdminLayout({
                         </span>
                       )}
                     </button>
-                  )
+                  );
                 })}
               </nav>
             </div>
@@ -354,5 +380,5 @@ export default function AdminLayout({
         </div>
       )}
     </div>
-  )
+  );
 }

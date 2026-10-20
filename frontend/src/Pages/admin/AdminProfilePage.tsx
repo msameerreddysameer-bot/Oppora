@@ -1,186 +1,190 @@
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Camera, Check, Edit2 } from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
-import { useAuth } from '@/components/AuthContext'
-import { updateUserProfile } from '@/services/opportunityService'
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Camera, Check, Edit2 } from "lucide-react";
+import AdminLayout from "@/components/admin/AdminLayout";
+import { useAuth } from "@/components/AuthContext";
+import { updateUserProfile } from "@/services/opportunityService";
 
 export default function AdminProfilePage() {
-  const navigate = useNavigate()
-  const { user, refreshAuth } = useAuth()
+  const navigate = useNavigate();
+  const { user, refreshAuth } = useAuth();
 
   // Clean avatar helper to prevent hardcoded mock image
   const cleanAvatarUrl = (url?: string | null) => {
-    if (!url) return null
-    if (url.includes('images.unsplash.com/photo-1534528741775-53994a69daeb')) return null
-    return url
-  }
+    if (!url) return null;
+    if (url.includes("images.unsplash.com/photo-1534528741775-53994a69daeb"))
+      return null;
+    return url;
+  };
 
   // Profile data from storage or AuthContext
   const initialName =
-    localStorage.getItem('admin_profile_name') ||
+    localStorage.getItem("admin_profile_name") ||
     user?.FullName ||
     user?.fullName ||
     user?.name ||
-    'Administrator'
+    "Administrator";
 
   const initialAvatar =
-    cleanAvatarUrl(localStorage.getItem('admin_profile_avatar')) ||
-    cleanAvatarUrl(typeof user?.avatar === 'string' ? user.avatar : user?.avatar?.url) ||
+    cleanAvatarUrl(localStorage.getItem("admin_profile_avatar")) ||
+    cleanAvatarUrl(
+      typeof user?.avatar === "string" ? user.avatar : user?.avatar?.url
+    ) ||
     cleanAvatarUrl(user?.avatarUrl) ||
     cleanAvatarUrl(user?.profilePicture) ||
-    null
+    null;
 
-  const email = user?.email || 'admin@opportunityradar.org'
+  const email = user?.email || "admin@opportunityradar.org";
 
   // Display State
-  const [fullName, setFullName] = useState(initialName)
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatar)
+  const [fullName, setFullName] = useState(initialName);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatar);
 
   // Edit Mode State
-  const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState(initialName)
-  const [editAvatar, setEditAvatar] = useState<string | null>(initialAvatar)
-  const [avatarFile, setAvatarFile] = useState<File | null>(null)
-  const [isSaving, setIsSaving] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(initialName);
+  const [editAvatar, setEditAvatar] = useState<string | null>(initialAvatar);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Synchronize profile details when user is fetched or changes from AuthContext
   useEffect(() => {
     if (user) {
       const name =
-        localStorage.getItem('admin_profile_name') ||
+        localStorage.getItem("admin_profile_name") ||
         user.FullName ||
         user.fullName ||
-        user.name
+        user.name;
       if (name) {
-        setFullName(name)
-        if (!isEditing) setEditName(name)
+        setFullName(name);
+        if (!isEditing) setEditName(name);
       }
 
       const avatar =
-        cleanAvatarUrl(localStorage.getItem('admin_profile_avatar')) ||
-        cleanAvatarUrl(typeof user.avatar === 'string' ? user.avatar : user.avatar?.url) ||
+        cleanAvatarUrl(localStorage.getItem("admin_profile_avatar")) ||
+        cleanAvatarUrl(
+          typeof user.avatar === "string" ? user.avatar : user.avatar?.url
+        ) ||
         cleanAvatarUrl(user.avatarUrl) ||
-        cleanAvatarUrl(user.profilePicture)
+        cleanAvatarUrl(user.profilePicture);
       if (avatar) {
-        setAvatarUrl(avatar)
-        if (!isEditing) setEditAvatar(avatar)
-        localStorage.setItem('admin_profile_avatar', avatar)
+        setAvatarUrl(avatar);
+        if (!isEditing) setEditAvatar(avatar);
+        localStorage.setItem("admin_profile_avatar", avatar);
       }
     }
-  }, [user, isEditing])
+  }, [user, isEditing]);
 
   // Photo Upload Handler (Supports PNG, JPEG, WebP)
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      alert('Please upload a valid image file (PNG, JPEG, or WebP).')
-      return
+      alert("Please upload a valid image file (PNG, JPEG, or WebP).");
+      return;
     }
 
     // Keep the raw File object to send in multipart/form-data to the backend
-    setAvatarFile(file)
+    setAvatarFile(file);
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = () => {
-      const result = reader.result as string
-      setEditAvatar(result)
-    }
-    reader.readAsDataURL(file)
-    e.target.value = ''
-  }
+      const result = reader.result as string;
+      setEditAvatar(result);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
 
   // Start editing
   const handleStartEdit = () => {
-    setEditName(fullName)
-    setEditAvatar(avatarUrl)
-    setAvatarFile(null)
-    setIsEditing(true)
-    setSaveSuccess(false)
-  }
+    setEditName(fullName);
+    setEditAvatar(avatarUrl);
+    setAvatarFile(null);
+    setIsEditing(true);
+    setSaveSuccess(false);
+  };
 
   // Cancel editing
   const handleCancel = () => {
-    setEditName(fullName)
-    setEditAvatar(avatarUrl)
-    setAvatarFile(null)
-    setIsEditing(false)
-    setSaveSuccess(false)
-  }
+    setEditName(fullName);
+    setEditAvatar(avatarUrl);
+    setAvatarFile(null);
+    setIsEditing(false);
+    setSaveSuccess(false);
+  };
 
   // Save changes (only Full Name and Profile Photo)
   const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!editName.trim()) {
-      alert('Please enter your full name.')
-      return
+      alert("Please enter your full name.");
+      return;
     }
 
-    setIsSaving(true)
-    const finalName = editName.trim()
-    const finalAvatar = editAvatar
+    setIsSaving(true);
+    const finalName = editName.trim();
+    const finalAvatar = editAvatar;
 
     try {
       // 1. Prepare FormData to send to backend API
-      const formData = new FormData()
-      formData.append('FullName', finalName)
+      const formData = new FormData();
+      formData.append("FullName", finalName);
       if (avatarFile) {
-        formData.append('avatar', avatarFile)
+        formData.append("avatar", avatarFile);
       }
 
-      let backendAvatarUrl: string | null = null
+      let backendAvatarUrl: string | null = null;
 
       // Sync with backend API (Multer upload to Cloudinary and MongoDB persistence)
       try {
-        const response = await updateUserProfile(formData)
-        const updatedUser = response?.data?.user || response?.data || response
+        const response = await updateUserProfile(formData);
+        const updatedUser = response?.data?.user || response?.data || response;
         const serverAvatar =
-          typeof updatedUser?.avatar === 'string'
+          typeof updatedUser?.avatar === "string"
             ? updatedUser.avatar
-            : updatedUser?.avatar?.url || updatedUser?.avatarUrl
+            : updatedUser?.avatar?.url || updatedUser?.avatarUrl;
         if (serverAvatar) {
-          backendAvatarUrl = cleanAvatarUrl(serverAvatar)
+          backendAvatarUrl = cleanAvatarUrl(serverAvatar);
         }
         if (refreshAuth) {
-          await refreshAuth()
+          await refreshAuth();
         }
-      } catch (apiErr) {
-        console.warn('Backend sync note (persisted locally):', apiErr)
+      } catch {
+        // Backend sync error; persisted locally
       }
 
       // 2. Persist in localStorage and state
-      localStorage.setItem('admin_profile_name', finalName)
-      const persistentAvatar = backendAvatarUrl || finalAvatar
+      localStorage.setItem("admin_profile_name", finalName);
+      const persistentAvatar = backendAvatarUrl || finalAvatar;
 
       if (persistentAvatar) {
-        localStorage.setItem('admin_profile_avatar', persistentAvatar)
+        localStorage.setItem("admin_profile_avatar", persistentAvatar);
       } else {
-        localStorage.removeItem('admin_profile_avatar')
+        localStorage.removeItem("admin_profile_avatar");
       }
 
       // Update local state
-      setFullName(finalName)
-      setAvatarUrl(persistentAvatar)
-      setAvatarFile(null)
-      setIsEditing(false)
-      setIsSaving(false)
-      setSaveSuccess(true)
+      setFullName(finalName);
+      setAvatarUrl(persistentAvatar);
+      setAvatarFile(null);
+      setIsEditing(false);
+      setIsSaving(false);
+      setSaveSuccess(true);
 
       // Notify AdminLayout to immediately sync the top-bar profile info
-      window.dispatchEvent(new Event('admin-profile-updated'))
+      window.dispatchEvent(new Event("admin-profile-updated"));
 
-      setTimeout(() => setSaveSuccess(false), 3000)
-    } catch (err) {
-      console.error('Failed to save profile changes:', err)
-      setIsSaving(false)
-      alert('Failed to save changes. Please try again.')
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch {
+      setIsSaving(false);
+      alert("Failed to save changes. Please try again.");
     }
-  }
+  };
 
   return (
     <AdminLayout activeTab="profile">
@@ -190,10 +194,13 @@ export default function AdminProfilePage() {
         <div className="w-full max-w-[448px] mb-4 flex items-center justify-between">
           <button
             type="button"
-            onClick={() => navigate('/admin')}
+            onClick={() => navigate("/admin")}
             className="inline-flex items-center gap-2 rounded-xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-300 hover:border-blue-500/30 dark:hover:border-cyan-500/30 transition-all shadow-sm group cursor-pointer"
           >
-            <ArrowLeft size={15} className="group-hover:-translate-x-0.5 transition-transform" />
+            <ArrowLeft
+              size={15}
+              className="group-hover:-translate-x-0.5 transition-transform"
+            />
             <span>Back to Dashboard</span>
           </button>
         </div>
@@ -255,7 +262,7 @@ export default function AdminProfilePage() {
 
                 <button
                   type="button"
-                  onClick={() => navigate('/admin')}
+                  onClick={() => navigate("/admin")}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 px-5 py-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                 >
                   <ArrowLeft size={14} />
@@ -319,8 +326,8 @@ export default function AdminProfilePage() {
                     <button
                       type="button"
                       onClick={() => {
-                        setEditAvatar(null)
-                        setAvatarFile(null)
+                        setEditAvatar(null);
+                        setAvatarFile(null);
                       }}
                       className="text-xs font-semibold text-rose-500 hover:text-rose-400 hover:underline cursor-pointer"
                     >
@@ -358,7 +365,8 @@ export default function AdminProfilePage() {
                   className="w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800/50 px-3.5 py-2.5 text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed select-none"
                 />
                 <p className="text-[11px] text-slate-400">
-                  Email address is associated with administrator credentials and is read-only.
+                  Email address is associated with administrator credentials and
+                  is read-only.
                 </p>
               </div>
 
@@ -378,7 +386,7 @@ export default function AdminProfilePage() {
                   disabled={isSaving}
                   className="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/30 hover:bg-blue-500 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
                 >
-                  {isSaving ? 'Saving...' : 'Save changes'}
+                  {isSaving ? "Saving..." : "Save changes"}
                 </button>
               </div>
             </form>
@@ -386,5 +394,5 @@ export default function AdminProfilePage() {
         </div>
       </div>
     </AdminLayout>
-  )
+  );
 }

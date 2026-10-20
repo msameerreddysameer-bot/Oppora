@@ -1,25 +1,23 @@
 import { Types } from "mongoose";
 
+type OpportunityCategory =
+  | "Scholarship"
+  | "intership"
+  | "hackathon"
+  | "competition"
+  | "fellowship"
+  | "research"
+  | "open-source"
+  | "workshop";
 
-type OpportunityCategory = 
-    | "Scholarship" 
-    | "intership" 
-    | "hackathon" 
-    | "competition" 
-    | "fellowship"
-    |  "research"
-    | "open-source"
-    | "workshop" ;
-
-type organisationType = 
-    | "government" 
-    | "private"
-    | "university"
-    | "ngo"
-    | "start-up"
-    | "non-profit"
-    | "international-organisation" ;
-
+type organisationType =
+  | "government"
+  | "private"
+  | "university"
+  | "ngo"
+  | "start-up"
+  | "non-profit"
+  | "international-organisation";
 
 // export const  documentsOptions = [
 //   "Aadhaar Card",
@@ -92,35 +90,40 @@ type organisationType =
 //   "Government ID Proof",
 
 //   "Other",
-// ] as const 
+// ] as const
 
-// export type documentsOptions = typeof documentsOptions[number]; 
+// export type documentsOptions = typeof documentsOptions[number];
 
-
-export interface Iopportunity{
-    organizationLogo:string
-    category:OpportunityCategory,
-    title:string,
-    description:string,
-    organization:string,
-    organizationType:organisationType,
-    requiredDocuments:string[],
-    startDate:Date,
-    deadline:Date,
-    officialSourceUrl:string,
-    eligibility:string[],
-    eligibilitySummary:string,
-    benefitsSummary:string,
-    location:string,
-    sourceStatus:string,
-    createdAt:Date,
-    updatedAt:Date,
-    createdBy:Types.ObjectId,
-    applicationUrl:string,
-    lastVerifiedAt:Date,
-    benefits:string[],
-    educationLevel:'high-school' | 'diploma' | 'undergraduate' | 'postgraduate' | 'phd'| 'all',
-    status:string,
-    publicationStatus?: 'draft' | 'published',
-    gender:'male' | 'female' | 'other' | 'all'
+export interface Iopportunity {
+  organizationLogo: string;
+  category: OpportunityCategory;
+  title: string;
+  description: string;
+  organization: string;
+  organizationType: organisationType;
+  requiredDocuments: string[];
+  startDate: Date;
+  deadline: Date;
+  officialSourceUrl: string;
+  eligibility: string[];
+  eligibilitySummary: string;
+  benefitsSummary: string;
+  location: string;
+  sourceStatus: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: Types.ObjectId;
+  applicationUrl: string;
+  lastVerifiedAt: Date;
+  benefits: string[];
+  educationLevel:
+    | "high-school"
+    | "diploma"
+    | "undergraduate"
+    | "postgraduate"
+    | "phd"
+    | "all";
+  status: string;
+  publicationStatus?: "draft" | "published";
+  gender: "male" | "female" | "other" | "all";
 }

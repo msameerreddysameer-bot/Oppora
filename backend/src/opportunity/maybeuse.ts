@@ -1,214 +1,209 @@
+// if (!queryTerm && !category && !sourceStatus && !organizationType?.length) {
+//   const Result = await Opportunity.find()
+//     .sort({ deadline: 1 })
+//     .skip(skip)
+//     .limit(limit);
 
-  // if (!queryTerm && !category && !sourceStatus && !organizationType?.length) {
-  //   const Result = await Opportunity.find()
-  //     .sort({ deadline: 1 })
-  //     .skip(skip)
-  //     .limit(limit);
+import { Opportunity } from "./opportunity.model.ts";
 
-import { Opportunity } from "./opportunity.model.ts"
+//   res
+//     .status(200)
+//     .json(
+//       new ApiResponse(
+//         200,
+//         { results:Result,
+//           page,
+//           limit,
+//           totalResults:Result.length
+//         },
+//         "default result fetched successfully"
+//       )
+//     );
 
-  //   res
-  //     .status(200)
-  //     .json(
-  //       new ApiResponse(
-  //         200,
-  //         { results:Result,
-  //           page,
-  //           limit,
-  //           totalResults:Result.length
-  //         },
-  //         "default result fetched successfully"
-  //       )
-  //     );
+//   return;
+// }
 
-  //   return;
-  // }
+// if (!queryTerm && !category && !sourceStatus && organizationType?.length) {
+//   const Result = await Opportunity.find({
+//     organizationType: { $in: organizationType },
+//   })
+//     .sort({ deadline: 1 })
+//     .skip(skip)
+//     .limit(limit);
 
-  // if (!queryTerm && !category && !sourceStatus && organizationType?.length) {
-  //   const Result = await Opportunity.find({
-  //     organizationType: { $in: organizationType },
-  //   })
-  //     .sort({ deadline: 1 })
-  //     .skip(skip)
-  //     .limit(limit);
+//   res
+//     .status(200)
+//     .json(
+//       new ApiResponse(
+//         200,
+//         { results:Result,
+//           page,
+//           limit,
+//           totalResults:Result.length
+//         },
+//         "based on organization type result fetched successfully"
+//       )
+//     );
 
-  //   res
-  //     .status(200)
-  //     .json(
-  //       new ApiResponse(
-  //         200,
-  //         { results:Result,
-  //           page,
-  //           limit,
-  //           totalResults:Result.length
-  //         },
-  //         "based on organization type result fetched successfully"
-  //       )
-  //     );
+//   return;
+// }
 
-  //   return;
-  // }
+// if (!queryTerm && !category && sourceStatus && !organizationType?.length) {
+//   const Result = await Opportunity.find({
+//     sourceStatus: sourceStatus,
+//   })
+//     .sort({ deadline: 1 })
+//     .skip(skip)
+//     .limit(limit);
 
-  // if (!queryTerm && !category && sourceStatus && !organizationType?.length) {
-  //   const Result = await Opportunity.find({
-  //     sourceStatus: sourceStatus,
-  //   })
-  //     .sort({ deadline: 1 })
-  //     .skip(skip)
-  //     .limit(limit);
+//   res
+//     .status(200)
+//     .json(
+//       new ApiResponse(
+//         200,
+//         { results:Result,
+//           page,
+//           limit,
+//           totalResults:Result.length
+//         },
+//         "based on source status result fetched successfully"
+//       )
+//     );
 
-  //   res
-  //     .status(200)
-  //     .json(
-  //       new ApiResponse(
-  //         200,
-  //         { results:Result,
-  //           page,
-  //           limit,
-  //           totalResults:Result.length
-  //         },
-  //         "based on source status result fetched successfully"
-  //       )
-  //     );
+//   return;
+// }
 
-  //   return;
-  // }
+// if (!queryTerm && !category && sourceStatus && organizationType?.length) {
+//   const Result = await Opportunity.find({
+//     sourceStatus: sourceStatus,
+//     organizationType: { $in: organizationType },
+//   })
+//     .sort({ deadline: 1 })
+//     .skip(skip)
+//     .limit(limit);
 
-  // if (!queryTerm && !category && sourceStatus && organizationType?.length) {
-  //   const Result = await Opportunity.find({
-  //     sourceStatus: sourceStatus,
-  //     organizationType: { $in: organizationType },
-  //   })
-  //     .sort({ deadline: 1 })
-  //     .skip(skip)
-  //     .limit(limit);
+//   res
+//     .status(200)
+//     .json(
+//       new ApiResponse(
+//         200,
+//         { results:Result,
+//           page,
+//           limit,
+//           totalResults:Result.length
+//         },
+//         "based on organization type and source status result fetched successfully"
+//       )
+//     );
 
-  //   res
-  //     .status(200)
-  //     .json(
-  //       new ApiResponse(
-  //         200,
-  //         { results:Result,
-  //           page,
-  //           limit,
-  //           totalResults:Result.length
-  //         },
-  //         "based on organization type and source status result fetched successfully"
-  //       )
-  //     );
+//   return;
+// }
 
-  //   return;
-  // }
+// if (!queryTerm && category && !sourceStatus && !organizationType?.length) {
+//   const Result = await Opportunity.find({
+//     category: category,
+//   })
+//     .sort({ deadline: 1 })
+//     .skip(skip)
+//     .limit(limit);
 
-  // if (!queryTerm && category && !sourceStatus && !organizationType?.length) {
-  //   const Result = await Opportunity.find({
-  //     category: category,
-  //   })
-  //     .sort({ deadline: 1 })
-  //     .skip(skip)
-  //     .limit(limit);
+//   res
+//     .status(200)
+//     .json(
+//       new ApiResponse(
+//         200,
+//         { results:Result,
+//           page,
+//           limit,
+//           totalResults:Result.length
+//         },
+//         "based on category result fetched successfully"
+//       )
+//     );
 
-  //   res
-  //     .status(200)
-  //     .json(
-  //       new ApiResponse(
-  //         200,
-  //         { results:Result,
-  //           page,
-  //           limit,
-  //           totalResults:Result.length
-  //         },
-  //         "based on category result fetched successfully"
-  //       )
-  //     );
+//   return;
+// }
 
-  //   return;
-  // }
+// if (!queryTerm && category && !sourceStatus && organizationType?.length) {
+//   const Result = await Opportunity.find({
+//     category: category,
+//     organizationType: { $in: organizationType },
+//   })
+//     .sort({ deadline: 1 })
+//     .skip(skip)
+//     .limit(limit);
 
-  // if (!queryTerm && category && !sourceStatus && organizationType?.length) {
-  //   const Result = await Opportunity.find({
-  //     category: category,
-  //     organizationType: { $in: organizationType },
-  //   })
-  //     .sort({ deadline: 1 })
-  //     .skip(skip)
-  //     .limit(limit);
+//   res
+//     .status(200)
+//     .json(
+//       new ApiResponse(
+//         200,
+//         { results:Result,
+//           page,
+//           limit,
+//           totalResults:Result.length
+//         },
+//         "based on category and organization type result fetched successfully"
+//       )
+//     );
 
-  //   res
-  //     .status(200)
-  //     .json(
-  //       new ApiResponse(
-  //         200,
-  //         { results:Result,
-  //           page,
-  //           limit,
-  //           totalResults:Result.length
-  //         },
-  //         "based on category and organization type result fetched successfully"
-  //       )
-  //     );
+//   return;
+// }
 
-  //   return;
-  // }
+// if (!queryTerm && category && sourceStatus && !organizationType?.length) {
+//   const Result = await Opportunity.find({
+//     category: category,
+//     sourceStatus: sourceStatus,
+//   })
+//     .sort({ deadline: 1 })
+//     .skip(skip)
+//     .limit(limit);
 
-  // if (!queryTerm && category && sourceStatus && !organizationType?.length) {
-  //   const Result = await Opportunity.find({
-  //     category: category,
-  //     sourceStatus: sourceStatus,
-  //   })
-  //     .sort({ deadline: 1 })
-  //     .skip(skip)
-  //     .limit(limit);
+//   res
+//     .status(200)
+//     .json(
+//       new ApiResponse(
+//         200,
+//         { results:Result,
+//           page,
+//           limit,
+//           totalResults:Result.length
+//         },
+//         "based on category and source status result fetched successfully"
+//       )
+//     );
 
-  //   res
-  //     .status(200)
-  //     .json(
-  //       new ApiResponse(
-  //         200,
-  //         { results:Result,
-  //           page,
-  //           limit,
-  //           totalResults:Result.length
-  //         },
-  //         "based on category and source status result fetched successfully"
-  //       )
-  //     );
+//   return;
+// }
 
-  //   return;
-  // }
+// if (!queryTerm && category && sourceStatus && organizationType?.length) {
+//   const Result = await Opportunity.find({
+//     category: category,
+//     sourceStatus: sourceStatus,
+//     organizationType: { $in: organizationType },
+//   })
+//     .sort({ deadline: 1 })
+//     .skip(skip)
+//     .limit(limit);
 
-  // if (!queryTerm && category && sourceStatus && organizationType?.length) {
-  //   const Result = await Opportunity.find({
-  //     category: category,
-  //     sourceStatus: sourceStatus,
-  //     organizationType: { $in: organizationType },
-  //   })
-  //     .sort({ deadline: 1 })
-  //     .skip(skip)
-  //     .limit(limit);
+//   res
+//     .status(200)
+//     .json(
+//       new ApiResponse(
+//         200,
+//         { results:Result,
+//           page,
+//           limit,
+//           totalResults:Result.length
+//          },
+//         "based on category, source status and organization type result fetched successfully"
+//       )
+//     );
 
-  //   res
-  //     .status(200)
-  //     .json(
-  //       new ApiResponse(
-  //         200,
-  //         { results:Result,
-  //           page,
-  //           limit,
-  //           totalResults:Result.length
-  //          },
-  //         "based on category, source status and organization type result fetched successfully"
-  //       )
-  //     );
-
-  //   return;
-  // }
-
-
-
+//   return;
+// }
 
 //   const rundeletion = async() => {
-   
 
 //         await Opportunity.deleteMany({category:{$in:[
 //         "Scholarship",
@@ -221,15 +216,13 @@ import { Opportunity } from "./opportunity.model.ts"
 //         "workshop",
 //       ]}})
 //       }
-  
-
 
 //  export { rundeletion }
-  
+
 // export const loopToCreateOpportunity = async() => {
 
 //   const opportunities =[{
-//     
+//
 //     "category": "Scholarship",
 //     "title": "International Need-Based Initiative by Alpha Ventures",
 //     "description": "An exceptional opportunity designed to provide comprehensive support, resources, and hands-on experience in the field of need-based. Eligible participants will collaborate with industry professionals and top-tier researchers.",
@@ -255,7 +248,7 @@ import { Opportunity } from "./opportunity.model.ts"
 //     "createdBy": "6a9985c1a94f566c4d5754f2"
 //   },
 //   {
-//   
+//
 //     "category": "Scholarship",
 //     "title": "Equity Program [National Science Foundation]",
 //     "description": "An exceptional opportunity designed to provide comprehensive support, resources, and hands-on experience in the field of equity. Eligible participants will collaborate with industry professionals and top-tier researchers.",
@@ -6821,7 +6814,7 @@ import { Opportunity } from "./opportunity.model.ts"
 //     "gender": "other"
 //   }
 // ]
-   
+
 //   for (const i of opportunities){
 
 //   await Opportunity.create(i)

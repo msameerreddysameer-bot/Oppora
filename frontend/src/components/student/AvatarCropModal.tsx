@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Check,
-  RotateCw,
-  X,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-react";
+import { Check, RotateCw, X, ZoomIn, ZoomOut } from "lucide-react";
 
 /**
  * Professional Skeleton Avatar Component
@@ -111,10 +105,7 @@ export default function AvatarCropModal({
       setNaturalSize({ width: nw, height: nh });
 
       // Compute baseScale so the image fully covers the circle crop
-      const initialScale = Math.max(
-        CIRCLE_DIAMETER / nw,
-        CIRCLE_DIAMETER / nh,
-      );
+      const initialScale = Math.max(CIRCLE_DIAMETER / nw, CIRCLE_DIAMETER / nh);
       setBaseScale(initialScale);
     };
   }, [isOpen, imageSrc, CIRCLE_DIAMETER]);
@@ -175,13 +166,7 @@ export default function AvatarCropModal({
 
     // 1. Create circular clip path
     ctx.beginPath();
-    ctx.arc(
-      OUTPUT_SIZE / 2,
-      OUTPUT_SIZE / 2,
-      OUTPUT_SIZE / 2,
-      0,
-      Math.PI * 2,
-    );
+    ctx.arc(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2, OUTPUT_SIZE / 2, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
 
@@ -204,7 +189,7 @@ export default function AvatarCropModal({
         -naturalSize.width / 2,
         -naturalSize.height / 2,
         naturalSize.width,
-        naturalSize.height,
+        naturalSize.height
       );
     }
 
@@ -350,7 +335,9 @@ export default function AvatarCropModal({
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setZoom((z) => Math.max(1, +(z - 0.1).toFixed(2)))}
+                onClick={() =>
+                  setZoom((z) => Math.max(1, +(z - 0.1).toFixed(2)))
+                }
                 disabled={zoom <= 1}
                 className="rounded-lg p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800"
                 title="Zoom Out"
@@ -368,7 +355,9 @@ export default function AvatarCropModal({
               />
               <button
                 type="button"
-                onClick={() => setZoom((z) => Math.min(3, +(z + 0.1).toFixed(2)))}
+                onClick={() =>
+                  setZoom((z) => Math.min(3, +(z + 0.1).toFixed(2)))
+                }
                 disabled={zoom >= 3}
                 className="rounded-lg p-1 text-slate-500 hover:bg-slate-200 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800"
                 title="Zoom In"

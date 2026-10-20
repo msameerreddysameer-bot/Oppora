@@ -20,12 +20,15 @@ export default function HeroSection() {
           <span className="text-blue-600"> built for students.</span>
         </h1>
         <p className="text-gray-400 leading-relaxed mb-7 max-w-xl ">
-          Opportunity Radar brings scholarships, internships, hackathons,
+          Oppora brings scholarships, internships, hackathons,
           fellowships, and research programs into one place — so you spend less
           time searching and more time applying.
         </p>
 
-        <Link to="/signup" className="text-white bg-blue-700 px-4 py-2   mt-6 rounded-xl">
+        <Link
+          to="/signup"
+          className="text-white bg-blue-700 px-4 py-2   mt-6 rounded-xl"
+        >
           Create a free account
         </Link>
         <hr className="border-gray-600 mt-14"></hr>

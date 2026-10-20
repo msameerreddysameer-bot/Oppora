@@ -4,11 +4,13 @@ import { User } from "./user.model.ts";
 import { ApiError } from "../utils/ApiError.ts";
 import { any } from "zod";
 
-
-
 const isAdmin = asyncHandler(async (req, _, next) => {
   try {
-    const user = (req as any).user || (await User.findById((req as any).user?._id).select("-password -refreshToken"));
+    const user =
+      (req as any).user ||
+      (await User.findById((req as any).user?._id).select(
+        "-password -refreshToken"
+      ));
 
     if (!user) {
       throw new ApiError(401, "Unauthorized request");
@@ -21,13 +23,20 @@ const isAdmin = asyncHandler(async (req, _, next) => {
     next();
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError(500, (error as any)?.message || "Failed to verify admin privileges");
+    throw new ApiError(
+      500,
+      (error as any)?.message || "Failed to verify admin privileges"
+    );
   }
 });
 
 const isUser = asyncHandler(async (req, _, next) => {
   try {
-    const user = (req as any).user || (await User.findById((req as any).user?._id).select("-password -refreshToken"));
+    const user =
+      (req as any).user ||
+      (await User.findById((req as any).user?._id).select(
+        "-password -refreshToken"
+      ));
 
     if (!user) {
       throw new ApiError(401, "Unauthorized request");
@@ -40,9 +49,11 @@ const isUser = asyncHandler(async (req, _, next) => {
     next();
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new ApiError(500, (error as any)?.message || "Failed to verify user privileges");
+    throw new ApiError(
+      500,
+      (error as any)?.message || "Failed to verify user privileges"
+    );
   }
 });
-  
 
-export { isAdmin , isUser }
+export { isAdmin, isUser };

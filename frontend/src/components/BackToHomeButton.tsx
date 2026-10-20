@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom"
-import { ArrowLeft } from "lucide-react"
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 interface BackToHomeButtonProps {
-  className?: string
-  label?: string
+  className?: string;
+  label?: string;
 }
 
 export const BackToHomeButton = ({
@@ -19,8 +19,7 @@ export const BackToHomeButton = ({
       <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5 text-cyan-400" />
       <span>{label}</span>
     </Link>
-  )
-}
+  );
+};
 
-export default BackToHomeButton
-
+export default BackToHomeButton;

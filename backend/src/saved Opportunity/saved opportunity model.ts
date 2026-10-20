@@ -11,24 +11,22 @@ const savedOpportunitySchema = new Schema<IOpportunity>(
       type: Schema.Types.ObjectId,
       ref: User,
       required: true,
-      index:true
+      index: true,
     },
     opportunity: {
       type: Schema.Types.ObjectId,
       ref: Opportunity,
       required: true,
     },
-    savedAt:{
-        type:Date,
-        required:true,
-        default:Date.now()
-    }
+    savedAt: {
+      type: Date,
+      required: true,
+      default: Date.now(),
+    },
   },
   { timestamps: true }
 );
 
+const SavedOpportunity = model("SavedOpportunity", savedOpportunitySchema);
 
-
-const SavedOpportunity = model("SavedOpportunity",savedOpportunitySchema)
-
-export  {SavedOpportunity}
+export { SavedOpportunity };

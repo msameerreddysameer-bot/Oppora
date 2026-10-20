@@ -21,7 +21,7 @@ const saveOpportunity = asyncHandler(async (req, res) => {
 
   const alreadyExistsSavedOpportunity = await SavedOpportunity.findOne({
     opportunity: opportunityId,
-    user:(req as any).user._id
+    user: (req as any).user._id,
   });
 
   if (alreadyExistsSavedOpportunity) {
@@ -39,9 +39,7 @@ const saveOpportunity = asyncHandler(async (req, res) => {
 
   res
     .status(201)
-    .json(
-      new ApiResponse(201, opportunity, "Opportunity saved successfully")
-    );
+    .json(new ApiResponse(201, opportunity, "Opportunity saved successfully"));
 });
 
 const unSaveOpportunity = asyncHandler(async (req, res) => {
@@ -55,10 +53,9 @@ const unSaveOpportunity = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid opportunity ID");
   }
 
-  const deleteOpportunity =
-    await SavedOpportunity.findOneAndDelete({
+  const deleteOpportunity = await SavedOpportunity.findOneAndDelete({
     opportunity: opportunityId,
-    user:(req as any).user._id
+    user: (req as any).user._id,
   });
 
   if (!deleteOpportunity) {
@@ -76,31 +73,36 @@ const unSaveOpportunity = asyncHandler(async (req, res) => {
     );
 });
 
-const checkSavedOpportunitiesByOpportunityId = asyncHandler(async(req,res) => {
+const checkSavedOpportunitiesByOpportunityId = asyncHandler(
+  async (req, res) => {
+    const { opportunityId } = req.params;
 
+    if (!opportunityId) {
+      throw new ApiError(400, "opportunityId is required");
+    }
 
-  const { opportunityId } = req.params;
+    if (!isValidObjectId(opportunityId)) {
+      throw new ApiError(400, "invalid opportunityId");
+    }
 
-  if (!opportunityId) {
-    throw new ApiError(400, "opportunityId is required");
+    const alreadyExistsSavedOpportunity = await SavedOpportunity.findOne({
+      opportunity: opportunityId,
+      user: (req as any).user._id,
+    });
+
+    const isSaved: boolean = alreadyExistsSavedOpportunity ? true : false;
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { isSaved: isSaved, SavedOpportunity: alreadyExistsSavedOpportunity },
+          "successfully check opportunity"
+        )
+      );
   }
-
-  if (!isValidObjectId(opportunityId)) {
-    throw new ApiError(400, "invalid opportunityId");
-  }
-
-  const alreadyExistsSavedOpportunity = await SavedOpportunity.findOne({
-    opportunity: opportunityId,
-    user:(req as any).user._id
-  });
-
-  const isSaved:boolean = alreadyExistsSavedOpportunity?true:false
-
-  res.status(200).json(new ApiResponse(200,{isSaved:isSaved,SavedOpportunity:alreadyExistsSavedOpportunity},"successfully check opportunity"))
-
-
-
-})
+);
 
 // const getSavedOpportunitiesByUserIdAndSearch = asyncHandler(
 //   async (req, res) => {
@@ -122,14 +124,9 @@ const checkSavedOpportunitiesByOpportunityId = asyncHandler(async(req,res) => {
 //       limit = 10,
 //       category,
 //       sourceStatus,
-      
+
 //       organizationType,
 //     } = validateData.data;
-
-//     console.log("RAW QUERY:", req.query);
-// console.log("VALIDATED QUERY:", validateData.data);
-// console.log("QUERY TERM:", queryTerm);
-// console.log("QUERY TERM TYPE:", typeof queryTerm);
 
 //     // Calculate pagination offset
 //     const skip = (page - 1) * limit;
@@ -360,7 +357,6 @@ const checkSavedOpportunitiesByOpportunityId = asyncHandler(async(req,res) => {
 //   }
 // );
 
-
 const getSavedOpportunitiesByUserIdAndSearch = asyncHandler(
   async (req, res) => {
     // 1. Validate query parameters
@@ -417,8 +413,18 @@ const getSavedOpportunitiesByUserIdAndSearch = asyncHandler(
     if (queryTerm && queryTerm.trim() !== "") {
       // Case-insensitive search on title or organization
       opportunityFilters.$or = [
-        { "opportunityDetails.title": { $regex: queryTerm.trim(), $options: "i" } },
-        { "opportunityDetails.organization": { $regex: queryTerm.trim(), $options: "i" } },
+        {
+          "opportunityDetails.title": {
+            $regex: queryTerm.trim(),
+            $options: "i",
+          },
+        },
+        {
+          "opportunityDetails.organization": {
+            $regex: queryTerm.trim(),
+            $options: "i",
+          },
+        },
       ];
     }
 
@@ -513,12 +519,10 @@ const getSavedOpportunityById = asyncHandler(async (req, res) => {
     );
 });
 
-
-
 export {
   saveOpportunity,
   unSaveOpportunity,
   getSavedOpportunitiesByUserIdAndSearch,
   getSavedOpportunityById,
-  checkSavedOpportunitiesByOpportunityId
+  checkSavedOpportunitiesByOpportunityId,
 };

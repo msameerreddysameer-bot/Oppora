@@ -2,8 +2,15 @@ import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.ts";
 import { ApiError } from "../utils/ApiError.ts";
 import { ApiResponse } from "../utils/ApiResponse.ts";
-import { type IRegisterResponse, type IverifyVerificationToken, type Register } from "./auth.types.ts";
-import { RegisterSchema, verifyVerificationTokenSchema} from "./auth.validation.ts";
+import {
+  type IRegisterResponse,
+  type IverifyVerificationToken,
+  type Register,
+} from "./auth.types.ts";
+import {
+  RegisterSchema,
+  verifyVerificationTokenSchema,
+} from "./auth.validation.ts";
 import { User } from "../user/user.model.ts";
 import { generateVerificationToken } from "../utils/token.ts";
 import { VerificationEmail } from "./verificationToken.model.ts";
@@ -14,28 +21,25 @@ import { Resend } from "resend";
 import { type IUser } from "../user/user.types.ts";
 
 const generateAccessTokenandRefreshToken = async (userId: Types.ObjectId) => {
-  
-  
   try {
     const user = await User.findById(userId);
     if (!user) {
-
-      throw new ApiError(404,"user not found for token generation")
+      throw new ApiError(404, "user not found for token generation");
     }
-      const accessToken = user.generateAccessToken() as string;
+    const accessToken = user.generateAccessToken() as string;
 
-      const refreshToken = user.generateRefreshToken() as string;
+    const refreshToken = user.generateRefreshToken() as string;
 
-      user.refreshToken = refreshToken;
+    user.refreshToken = refreshToken;
 
-      await user.save({ validateBeforeSave: false });
+    await user.save({ validateBeforeSave: false });
 
-      return { accessToken: accessToken, refreshToken: refreshToken };
-    
+    return { accessToken: accessToken, refreshToken: refreshToken };
   } catch (error) {
-
-    throw new ApiError(500,"something went wrong while generating the access token and refresh token  ")
-
+    throw new ApiError(
+      500,
+      "something went wrong while generating the access token and refresh token  "
+    );
   }
 };
 
@@ -52,21 +56,32 @@ const storeVerificationToken = async (userId: Types.ObjectId) => {
     expiresAt: expiresAt,
   });
 
-  return { token:token , message: "verification  Token stored Succesfully" };
+  return { token: token, message: "verification  Token stored Succesfully" };
 };
- 
-const sendVerificationEmail = (token: string , email:string ,route:string) => {
-   const resend = new Resend(process.env.RESEND_API_KEY);
-   const link = `http://localhost:5173/${route}?token=${token}`;
-   const isResetPassword = route === "reset-password";
-   const subject = isResetPassword ? "Reset your password" : "Verify your email address";
-   const action = isResetPassword ? "Reset Password" : "Verify Email";
 
-   resend.emails.send({
-     from: "onboarding@resend.dev",
-     to: email,
-     subject,
-     html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333333; line-height: 1.6;">
+const sendVerificationEmail = async (
+  token: string,
+  email: string,
+  route: string
+) => {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const frontendUrl = process.env.CORS_ORIGIN || "http://localhost:5173";
+  const link = `${frontendUrl}/${route}?token=${token}`;
+  const isResetPassword = route === "reset-password";
+  const subject = isResetPassword
+    ? "Reset your password"
+    : "Verify your email address";
+  const action = isResetPassword ? "Reset Password" : "Verify Email";
+  const fromEmail =
+    process.env.RESEND_FROM_EMAIL ||
+    "Oppora Team <notifications@oppora.me>";
+
+  try {
+    const { error } = await resend.emails.send({
+      from: fromEmail,
+      to: email,
+      subject,
+      html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333333; line-height: 1.6;">
        <h2 style="color: #111111; margin-bottom: 16px;">${subject}</h2>
        <p style="font-size: 16px; margin-bottom: 24px;">
          Please click the button below to continue:
@@ -93,10 +108,23 @@ const sendVerificationEmail = (token: string , email:string ,route:string) => {
          If you didn't create an account, you can safely ignore this email.
        </p>
      </div>`,
-   });
- };
+    });
 
- export const resendVerificationEmail = asyncHandler(async (req, res) => {
+    if (error) {
+      console.error(
+        "[Email Delivery Error]: Resend rejected message:",
+        error.message
+      );
+    }
+  } catch (err: any) {
+    console.error(
+      "[Email Delivery Failed]:",
+      err?.message || "Could not dispatch email via Resend"
+    );
+  }
+};
+
+export const resendVerificationEmail = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
@@ -128,9 +156,6 @@ const sendVerificationEmail = (token: string , email:string ,route:string) => {
     );
 });
 
-
- 
-
 //  const verifyVerificationToken = asyncHandler(async (req, res) => {
 //    const validateData = verifyVerificationTokenSchema.parse(req.query);
 //    const { token } = validateData;
@@ -149,10 +174,9 @@ const sendVerificationEmail = (token: string , email:string ,route:string) => {
 
 //      throw new ApiError(400,"token is expired")
 
-         
 //    }
 
-//    const userId = verificationEmail.userId 
+//    const userId = verificationEmail.userId
 
 //    const user = await User.findByIdAndUpdate(
 //      userId,
@@ -170,9 +194,10 @@ const sendVerificationEmail = (token: string , email:string ,route:string) => {
 
 //    res.status(200).json(new ApiResponse<IverifyVerificationToken>(200,{isEmailVerified:user?.isEmailVerified},"email is verified successfully"))
 
-
-  
 //  });
 
-
-export {storeVerificationToken , generateAccessTokenandRefreshToken , sendVerificationEmail}
+export {
+  storeVerificationToken,
+  generateAccessTokenandRefreshToken,
+  sendVerificationEmail,
+};

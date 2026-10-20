@@ -47,7 +47,6 @@ const getUserById = asyncHandler(async (req, res) => {
 });
 
 const updateUserProfileDetails = asyncHandler(async (req, res) => {
-
   const validateData = updateUserProfileDetailsSchema.safeParse(req.body ?? {});
 
   if (!validateData.success) {
@@ -59,18 +58,16 @@ const updateUserProfileDetails = asyncHandler(async (req, res) => {
 
   const { FullName, college, branch, year, skills, interests } =
     validateData.data;
-     const updatePayload: Record<string, any> = {};
+  const updatePayload: Record<string, any> = {};
 
-     if (req.file) {
+  if (req.file) {
     const avatarLocalPath = req.file?.path;
 
     if (!avatarLocalPath) {
       throw new ApiError(400, "Avatar file upload failed");
     }
 
-    const organizationLogo = await uploadOnCloudinary(
-      avatarLocalPath
-    );
+    const organizationLogo = await uploadOnCloudinary(avatarLocalPath);
 
     if (!organizationLogo) {
       throw new ApiError(
@@ -81,7 +78,6 @@ const updateUserProfileDetails = asyncHandler(async (req, res) => {
 
     updatePayload.avatar = organizationLogo.secure_url;
   }
- 
 
   if (FullName?.trim()) updatePayload.FullName = FullName.trim();
   if (college?.trim()) updatePayload.college = college.trim();
@@ -122,9 +118,7 @@ const fetchAllUsers = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(
-      new ApiResponse(200, AllUsers, "All users fetched successfully")
-    );
+    .json(new ApiResponse(200, AllUsers, "All users fetched successfully"));
 });
 
 const fetchAllAdmins = asyncHandler(async (req, res) => {
@@ -138,9 +132,7 @@ const fetchAllAdmins = asyncHandler(async (req, res) => {
 
   res
     .status(200)
-    .json(
-      new ApiResponse(200, AllAdmins, "All admins fetched successfully")
-    );
+    .json(new ApiResponse(200, AllAdmins, "All admins fetched successfully"));
 });
 
 const toogleUserRoleByEmail = asyncHandler(async (req, res) => {
@@ -155,27 +147,20 @@ const toogleUserRoleByEmail = asyncHandler(async (req, res) => {
 
   const { email } = validateData.data;
 
+  const user = await User.findOne({ email: email }).select(
+    "-password -refreshToken"
+  );
 
-
-  const user = await User.findOne(
-    { email: email }
-    
-  ).select("-password -refreshToken");
-
-
- 
   if (!user) {
     throw new ApiError(404, "User not found");
   }
-   if(user?.role === "user"){
-    user.role="admin"
-  }
-  else{
-    user.role="user"
+  if (user?.role === "user") {
+    user.role = "admin";
+  } else {
+    user.role = "user";
   }
 
-  await user.save({validateBeforeSave:false})
-
+  await user.save({ validateBeforeSave: false });
 
   res
     .status(200)

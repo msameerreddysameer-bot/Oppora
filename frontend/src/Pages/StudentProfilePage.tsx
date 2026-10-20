@@ -1,17 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Camera,
-  Check,
-  Pencil,
-  Trash2,
-  Upload,
-  X,
-} from "lucide-react";
+import { Camera, Check, Pencil, Trash2, Upload, X } from "lucide-react";
 import StudentLayout from "@/components/layout/StudentLayout";
 import AvatarCropModal, {
   PersonSkeletonAvatar,
 } from "@/components/student/AvatarCropModal";
-import { getUserProfile, updateUserProfile } from "@/services/opportunityService";
+import {
+  getUserProfile,
+  updateUserProfile,
+} from "@/services/opportunityService";
 import { useAuth } from "@/components/AuthContext";
 
 interface ProfileData {
@@ -101,7 +97,9 @@ export default function StudentProfilePage() {
   const [saved, setSaved] = useState<ProfileData>(() => {
     if (authUser) {
       const avatar =
-        (typeof authUser.avatar === "string" ? authUser.avatar : authUser.avatar?.url) ||
+        (typeof authUser.avatar === "string"
+          ? authUser.avatar
+          : authUser.avatar?.url) ||
         authUser.avatarUrl ||
         authUser.profilePicture ||
         null;
@@ -137,20 +135,25 @@ export default function StudentProfilePage() {
   useEffect(() => {
     if (authUser) {
       const avatar =
-        (typeof authUser.avatar === "string" ? authUser.avatar : authUser.avatar?.url) ||
+        (typeof authUser.avatar === "string"
+          ? authUser.avatar
+          : authUser.avatar?.url) ||
         authUser.avatarUrl ||
         authUser.profilePicture ||
         null;
 
       setSaved((prev) => ({
         ...prev,
-        name: authUser.FullName || authUser.fullName || authUser.name || prev.name,
+        name:
+          authUser.FullName || authUser.fullName || authUser.name || prev.name,
         email: authUser.email || prev.email,
         college: authUser.college || authUser.university || prev.college,
         branch: authUser.branch || prev.branch,
         year: authUser.year || prev.year,
         skills: Array.isArray(authUser.skills) ? authUser.skills : prev.skills,
-        interests: Array.isArray(authUser.interests) ? authUser.interests : prev.interests,
+        interests: Array.isArray(authUser.interests)
+          ? authUser.interests
+          : prev.interests,
         avatarUrl: avatar !== null ? avatar : prev.avatarUrl,
       }));
     }
@@ -165,16 +168,20 @@ export default function StudentProfilePage() {
   useEffect(() => {
     const fetchUserProfileDetails = async () => {
       try {
-        console.log("Fetching profile details from API...");
         const response = await getUserProfile();
-        console.log("User profile response from backend:", response);
 
         // Extract user data from response (handles response.data or response.data.data)
-        const user = response?.data?.user || response?.data?.data || response?.data || response;
+        const user =
+          response?.data?.user ||
+          response?.data?.data ||
+          response?.data ||
+          response;
 
         if (user) {
           const avatar =
-            (typeof user.avatar === "string" ? user.avatar : user.avatar?.url) ||
+            (typeof user.avatar === "string"
+              ? user.avatar
+              : user.avatar?.url) ||
             user.avatarUrl ||
             user.profilePicture ||
             null;
@@ -198,24 +205,22 @@ export default function StudentProfilePage() {
           setSaved(profileData);
           setDraft(profileData);
         }
-      } catch (error) {
-        console.error("Failed to fetch profile details from API:", error);
+      } catch {
+        // Fall back gracefully to cached state
       }
     };
 
     fetchUserProfileDetails();
   }, []);
 
-
-
   const completion = Math.round(
     ([saved.name, saved.email, saved.college, saved.branch, saved.year].filter(
-      Boolean,
+      Boolean
     ).length /
       5) *
       60 +
       (saved.skills.length ? 20 : 0) +
-      (saved.interests.length ? 20 : 0),
+      (saved.interests.length ? 20 : 0)
   );
 
   const fieldClass =
@@ -228,82 +233,84 @@ export default function StudentProfilePage() {
     setSavedNotice(null);
   }
 
-async function saveProfile() {
-  try {
-    const formData = new FormData();
+  async function saveProfile() {
+    try {
+      const formData = new FormData();
 
-    // 1. Text fields
-    formData.append("FullName", draft.name);
-    formData.append("college", draft.college);
-    formData.append("branch", draft.branch);
-    formData.append("year", draft.year);
+      // 1. Text fields
+      formData.append("FullName", draft.name);
+      formData.append("college", draft.college);
+      formData.append("branch", draft.branch);
+      formData.append("year", draft.year);
 
-    // 2. Arrays
-    formData.append("skills", JSON.stringify(draft.skills));
-    formData.append("interests", JSON.stringify(draft.interests));
+      // 2. Arrays
+      formData.append("skills", JSON.stringify(draft.skills));
+      formData.append("interests", JSON.stringify(draft.interests));
 
-    // 3. Original image file (only attached if user picked a new photo)
-    if (avatarFile) {
-      formData.append("avatar", avatarFile);
+      // 3. Original image file (only attached if user picked a new photo)
+      if (avatarFile) {
+        formData.append("avatar", avatarFile);
+      }
+
+      // 4. Single API Call
+      const response = await updateUserProfile(formData);
+
+      const updatedUser =
+        response?.data?.user ||
+        response?.data?.data ||
+        response?.data ||
+        response?.user;
+      const serverAvatar =
+        (typeof updatedUser?.avatar === "string"
+          ? updatedUser?.avatar
+          : updatedUser?.avatar?.url) ||
+        updatedUser?.avatarUrl ||
+        updatedUser?.profilePicture;
+
+      const finalProfile: ProfileData = {
+        ...draft,
+        ...(serverAvatar ? { avatarUrl: serverAvatar } : {}),
+      };
+
+      setSaved(finalProfile);
+      setDraft(finalProfile);
+      if (finalProfile.avatarUrl) {
+        localStorage.setItem("student_profile_avatar", finalProfile.avatarUrl);
+        window.dispatchEvent(new Event("profile-avatar-updated"));
+      }
+
+      // Synchronize AuthContext so navbar updates immediately
+      await refreshAuth();
+
+      setEditing(false);
+      setAvatarFile(null); // Reset after successful save
+      setSavedNotice("Profile updated successfully!");
+      setTimeout(() => setSavedNotice(null), 3000);
+    } catch {
+      setSavedNotice("Failed to save profile to server");
     }
-
-    console.log("Saving full profile to backend via single API call...");
-
-    // 4. Single API Call
-    const response = await updateUserProfile(formData);
-    console.log("Backend response:", response);
-
-    const updatedUser = response?.data?.user || response?.data?.data || response?.data || response?.user;
-    const serverAvatar =
-      (typeof updatedUser?.avatar === "string" ? updatedUser?.avatar : updatedUser?.avatar?.url) ||
-      updatedUser?.avatarUrl ||
-      updatedUser?.profilePicture;
-
-    const finalProfile: ProfileData = {
-      ...draft,
-      ...(serverAvatar ? { avatarUrl: serverAvatar } : {}),
-    };
-
-    setSaved(finalProfile);
-    setDraft(finalProfile);
-    if (finalProfile.avatarUrl) {
-      localStorage.setItem("student_profile_avatar", finalProfile.avatarUrl);
-      window.dispatchEvent(new Event("profile-avatar-updated"));
-    }
-
-    // Synchronize AuthContext so navbar updates immediately
-    await refreshAuth();
-
-    setEditing(false);
-    setAvatarFile(null); // Reset after successful save
-    setSavedNotice("Profile updated successfully!");
-    setTimeout(() => setSavedNotice(null), 3000);
-  } catch (error) {
-    console.error("Failed to update profile:", error);
-    setSavedNotice("Failed to save profile to server");
   }
-}
 
   // -------------------------------------------------------------
   // IMAGE SELECTION & CROP HANDLERS
   // -------------------------------------------------------------
- const processImageFile = (file: File) => {
-  if (!file.type.startsWith("image/")) {
-    alert("Please upload a valid image file.");
-    return;
-  }
+  const processImageFile = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file.");
+      return;
+    }
 
-  // Save the original binary file for the final API call
-  setAvatarFile(file);
+    // Save the original binary file for the final API call
+    setAvatarFile(file);
 
-  // Read data URL for the cropper modal preview
-  const reader = new FileReader();
-  reader.onload = () => {
-    setRawImageForCrop(reader.result as string);
-    setCropModalOpen(true);
+    // Read data URL for the cropper modal preview
+    const reader = new FileReader();
+    reader.onload = () => {
+      setRawImageForCrop(reader.result as string);
+      setCropModalOpen(true);
+    };
+    reader.readAsDataURL(file);
   };
-  reader.readAsDataURL(file);
-};
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -333,16 +340,16 @@ async function saveProfile() {
   };
 
   const handleSaveCroppedAvatar = (croppedDataUrl: string) => {
-  setDraft((prev) => ({ ...prev, avatarUrl: croppedDataUrl }));
-  setSaved((prev) => ({ ...prev, avatarUrl: croppedDataUrl }));
-  setEditing(true); // Automatically open edit mode so "Save changes" is visible
-  setCropModalOpen(false);
-  setRawImageForCrop(null);
-  setSavedNotice("Photo cropped! Click 'Save changes' to update your profile.");
-};
+    setDraft((prev) => ({ ...prev, avatarUrl: croppedDataUrl }));
+    setSaved((prev) => ({ ...prev, avatarUrl: croppedDataUrl }));
+    setEditing(true); // Automatically open edit mode so "Save changes" is visible
+    setCropModalOpen(false);
+    setRawImageForCrop(null);
+    setSavedNotice(
+      "Photo cropped! Click 'Save changes' to update your profile."
+    );
+  };
 
-
- 
   const handleRemoveAvatar = () => {
     setSaved((prev) => ({ ...prev, avatarUrl: null }));
     setDraft((prev) => ({ ...prev, avatarUrl: null }));

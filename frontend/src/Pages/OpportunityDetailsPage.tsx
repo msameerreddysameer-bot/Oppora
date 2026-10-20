@@ -14,9 +14,16 @@ import {
 import { Link, useParams } from "react-router-dom";
 import StudentLayout from "@/components/layout/StudentLayout";
 import EmptyState from "@/components/shared/EmptyState";
+import ErrorState from "@/components/shared/ErrorState";
+import { OpportunityDetailSkeleton } from "@/components/shared/Skeletons";
 import OrganizationLogo from "@/components/shared/OrganizationLogo";
-import {  type IOpportunity } from "@/demo/studentDemoData";
-import { checkSavedOpportunity, getOpportunitiesById ,saveOpportinity ,unSaveOpportunity} from "@/services/opportunityService";
+import { type IOpportunity } from "@/types/studentTypesData";
+import {
+  checkSavedOpportunity,
+  getOpportunitiesById,
+  saveOpportinity,
+  unSaveOpportunity,
+} from "@/services/opportunityService";
 
 function DetailSection({
   icon: Icon,
@@ -42,68 +49,77 @@ function DetailSection({
 
 export default function OpportunityDetailsPage() {
   const { opportunityId } = useParams();
-  // const opportunity = DEMO_OPPORTUNITIES.find(
-  //   (item) => item._id === opportunityId,
-  // );
   const [saved, setSaved] = useState(false);
   const [opportunityDetails, setOpportunityDetails] = useState<IOpportunity>();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [errorType, setErrorType] = useState<"network" | "server" | "generic">(
+    "generic"
+  );
+
+  const fetchOpportunityDetails = async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await getOpportunitiesById(id);
+      const data = response?.data?.opportunity || response?.data || response;
+      setOpportunityDetails(data);
+    } catch (err: any) {
+      if (
+        err?.code === "ERR_NETWORK" ||
+        err?.code === "ECONNABORTED" ||
+        !err?.response
+      ) {
+        setErrorType("network");
+      } else if (err?.response?.status >= 500) {
+        setErrorType("server");
+      } else {
+        setErrorType("generic");
+      }
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to load opportunity details."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const checkStatus = async () => {
+    if (!opportunityId) return;
+    try {
+      const isAlreadySaved = await checkSavedOpportunity(opportunityId);
+      setSaved(Boolean(isAlreadySaved));
+    } catch {
+      // Silently fall back to unsaved
+    }
+  };
 
   useEffect(() => {
+    if (!opportunityId) {
+      setIsLoading(false);
+      return;
+    }
 
-     if (!opportunityId) return;
-
-    const fetchOpportunityDetails = async (opportunityId: string) => {
-      try {
-        const response = await getOpportunitiesById(opportunityId);
-
-        setOpportunityDetails(response.data);
-      } catch (error) {
-        console.error(
-          "failed to fetch opportunity details :",
-          (error as Error).message,
-        );
-      }
-    };
-    
-       // 2 Check if already saved in MongoDB (returns true or false)
-
-       const checkStatus = async() => {
-        try {
-
-          const isAlreadysaved = await checkSavedOpportunity(opportunityId);
-          setSaved(Boolean(isAlreadysaved))
-          
-        } catch (error) {
-          console.error("failed to check saved status:", error);
-          
-        }
-       }
-
-    fetchOpportunityDetails(opportunityId as string);
-    checkStatus()
+    fetchOpportunityDetails(opportunityId);
+    checkStatus();
   }, [opportunityId]);
 
-  const handleTogglesave = async() => {
-
-     if (!opportunityId) return;
-     try {
-
-      if(saved){
+  const handleTogglesave = async () => {
+    if (!opportunityId) return;
+    try {
+      if (saved) {
         await unSaveOpportunity(opportunityId);
         setSaved(false);
-
-      }else{
-         await saveOpportinity(opportunityId);
+      } else {
+        await saveOpportinity(opportunityId);
         setSaved(true);
-
       }
-      
-     } catch (error) {
-      console.error("Failed to toggle save:", error);
-      
-     }
-
-  }
+    } catch {
+      // Silently keep current state on error
+    }
+  };
 
   const convertIsoDateToNormalDate = (IsoString?: string) => {
     if (!IsoString || typeof IsoString !== "string" || !IsoString.trim()) {
@@ -125,6 +141,34 @@ export default function OpportunityDetailsPage() {
       return IsoString || "Rolling";
     }
   };
+
+  if (isLoading) {
+    return (
+      <StudentLayout activePage="discover">
+        <OpportunityDetailSkeleton />
+      </StudentLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <StudentLayout activePage="discover">
+        <main className="mx-auto w-full max-w-3xl px-4 py-16">
+          <ErrorState
+            type={errorType}
+            title="Unable to load opportunity"
+            message={error}
+            onRetry={() => {
+              if (opportunityId) {
+                fetchOpportunityDetails(opportunityId);
+                checkStatus();
+              }
+            }}
+          />
+        </main>
+      </StudentLayout>
+    );
+  }
 
   if (!opportunityDetails)
     return (
@@ -158,14 +202,15 @@ export default function OpportunityDetailsPage() {
           <div className="flex min-w-0 flex-col gap-6">
             <section className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800">
               <div className="flex items-start gap-4">
-                {/* <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-blue-700 text-sm font-bold text-white">
-                  {opportunity.initials}
-                </div> */}
                 <OrganizationLogo
                   src={(opportunityDetails as IOpportunity).organizationLogo}
-                  originalSrc={(opportunityDetails as IOpportunity).originalLogo}
+                  originalSrc={
+                    (opportunityDetails as IOpportunity).originalLogo
+                  }
                   crop={(opportunityDetails as IOpportunity).logoCrop}
-                  organization={(opportunityDetails as IOpportunity).organization}
+                  organization={
+                    (opportunityDetails as IOpportunity).organization
+                  }
                   size="detail"
                 />
                 <div className="min-w-0">
@@ -202,7 +247,9 @@ export default function OpportunityDetailsPage() {
                       Start Date
                     </p>
                     <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                      {convertIsoDateToNormalDate((opportunityDetails as IOpportunity).startDate!)}
+                      {convertIsoDateToNormalDate(
+                        (opportunityDetails as IOpportunity).startDate!
+                      )}
                     </p>
                   </div>
                 )}
@@ -211,7 +258,9 @@ export default function OpportunityDetailsPage() {
                     Deadline
                   </p>
                   <p className="mt-1 text-sm font-semibold text-amber-600">
-                    {convertIsoDateToNormalDate((opportunityDetails as IOpportunity).deadline)}
+                    {convertIsoDateToNormalDate(
+                      (opportunityDetails as IOpportunity).deadline
+                    )}
                   </p>
                 </div>
                 <div>
@@ -219,10 +268,17 @@ export default function OpportunityDetailsPage() {
                     Benefit
                   </p>
                   <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    {(opportunityDetails as IOpportunity).benefitsSummary || "Competitive benefits"}
+                    {(opportunityDetails as IOpportunity).benefitsSummary ||
+                      "Competitive benefits"}
                   </p>
                 </div>
-                <div className={(opportunityDetails as IOpportunity).startDate ? "" : "col-span-2 sm:col-span-1"}>
+                <div
+                  className={
+                    (opportunityDetails as IOpportunity).startDate
+                      ? ""
+                      : "col-span-2 sm:col-span-1"
+                  }
+                >
                   <p className="text-[11px] uppercase tracking-wide text-slate-400">
                     Location
                   </p>
@@ -239,25 +295,16 @@ export default function OpportunityDetailsPage() {
                 <strong>
                   Applications are submitted on the official website.
                 </strong>{" "}
-                Opportunity Radar helps you discover and track this listing.
+                Oppora helps you discover and track this listing.
               </p>
             </div>
             <DetailSection icon={Info} title="About this opportunity">
-              <p className="whitespace-pre-line leading-relaxed">{(opportunityDetails as IOpportunity).description}</p>
+              <p className="whitespace-pre-line leading-relaxed">
+                {(opportunityDetails as IOpportunity).description}
+              </p>
             </DetailSection>
             <DetailSection icon={ListChecks} title="Eligibility requirements">
               <ul className="flex flex-col gap-2">
-              {/* this one u need to add at last */}
-                {/* {[
-                  (opportunityDetails as IOpportunity).eligibility || "this is a eligibility",
-                  "Review the official source for complete eligibility rules.",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                    {item}
-                  </li>
-                ))} */}
-
                 {[
                   ...[
                     "Must be a full-time undergraduate student",
@@ -276,33 +323,37 @@ export default function OpportunityDetailsPage() {
             </DetailSection>
             <DetailSection icon={Gift} title="What you get">
               <ul className="flex flex-col gap-2">
-                {/* this u ned add as final  */}
-                {/* {(opportunityDetails as IOpportunity).benefits.map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-500" />
-                    {item}
-                  </li>
-                ))} */}
-
                 {["this a first benefit", "2nd benefit", "third benefit"].map(
                   (item) => (
                     <li key={item} className="flex items-start gap-2">
                       <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-500" />
                       {item}
                     </li>
-                  ),
+                  )
                 )}
               </ul>
             </DetailSection>
             <DetailSection icon={FileText} title="Required documents">
               <ul className="flex flex-col gap-2">
-                {(opportunityDetails as IOpportunity).requiredDocuments.map(
-                  (item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-400" />
-                      {item}
-                    </li>
-                  ),
+                {Array.isArray(
+                  (opportunityDetails as IOpportunity)?.requiredDocuments
+                ) &&
+                (opportunityDetails as IOpportunity).requiredDocuments.length >
+                  0 ? (
+                  (opportunityDetails as IOpportunity).requiredDocuments.map(
+                    (item) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-400" />
+                        {item}
+                      </li>
+                    )
+                  )
+                ) : (
+                  <li className="flex items-start gap-2 text-slate-500 dark:text-slate-400">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-400" />
+                    Standard identification, academic transcripts, and
+                    curriculum vitae (CV/resume).
+                  </li>
                 )}
               </ul>
             </DetailSection>
@@ -325,7 +376,9 @@ export default function OpportunityDetailsPage() {
             <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
               <p className="text-xs text-slate-400">Deadline</p>
               <p className="mt-1 text-lg font-bold text-slate-900 dark:text-white">
-                {convertIsoDateToNormalDate((opportunityDetails as IOpportunity).deadline)}
+                {convertIsoDateToNormalDate(
+                  (opportunityDetails as IOpportunity).deadline
+                )}
               </p>
               <a
                 href={(opportunityDetails as IOpportunity).applicationUrl}
@@ -358,7 +411,9 @@ export default function OpportunityDetailsPage() {
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-slate-400">Location</dt>
-                  <dd>{(opportunityDetails as IOpportunity).location || "Remote"}</dd>
+                  <dd>
+                    {(opportunityDetails as IOpportunity).location || "Remote"}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-slate-400">Eligibility</dt>

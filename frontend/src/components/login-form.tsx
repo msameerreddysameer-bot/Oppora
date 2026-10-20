@@ -1,12 +1,12 @@
-import { cn } from "cn"
-import { Button } from "@/components/ui/button"
+import { cn } from "cn";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   AlertCircle,
   CheckCircle2,
@@ -16,179 +16,208 @@ import {
   Loader2,
   LogIn,
   X,
-} from "lucide-react"
-import { useEffect, useState } from "react"
-import { Link, useLocation, useNavigate } from "react-router-dom"
-import { login } from "@/services/authApi"
-import { useAuth } from "@/components/AuthContext"
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { login } from "@/services/authApi";
+import { useAuth } from "@/components/AuthContext";
 
 interface ToastNotification {
-  type: "success" | "error" | "info" | "warning"
-  title: string
-  message: string
+  type: "success" | "error" | "info" | "warning";
+  title: string;
+  message: string;
 }
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { refreshAuth } = useAuth()
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { refreshAuth, setAuthUser } = useAuth();
 
   // Read pre-filled email from router state or search params
   const [email, setEmail] = useState<string>(() => {
-    const stateEmail = (location.state as { email?: string })?.email
-    if (stateEmail) return stateEmail
-    const params = new URLSearchParams(window.location.search)
-    return params.get("email") || ""
-  })
+    const stateEmail = (location.state as { email?: string })?.email;
+    if (stateEmail) return stateEmail;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("email") || "";
+  });
 
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Status-specific UI states
   const [bannerAlert, setBannerAlert] = useState<{
-    type: "error" | "warning" | "info"
-    message: string
-  } | null>(null)
-  const [passwordError, setPasswordError] = useState(false)
-  const [toast, setToast] = useState<ToastNotification | null>(null)
+    type: "error" | "warning" | "info";
+    message: string;
+  } | null>(null);
+  const [passwordError, setPasswordError] = useState(false);
+  const [toast, setToast] = useState<ToastNotification | null>(null);
 
   // Auto-dismiss floating toast
   useEffect(() => {
-    if (!toast) return
+    if (!toast) return;
     const timer = setTimeout(() => {
-      setToast(null)
-    }, 4500)
-    return () => clearTimeout(timer)
-  }, [toast])
+      setToast(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Check if redirected from conflict or registration with a message
   useEffect(() => {
-    const stateMessage = (location.state as { infoMessage?: string })?.infoMessage
+    const stateMessage = (location.state as { infoMessage?: string })
+      ?.infoMessage;
     if (stateMessage) {
       setBannerAlert({
         type: "info",
         message: stateMessage,
-      })
+      });
     }
-  }, [location.state])
+  }, [location.state]);
 
   // Client-side validation
   const validateForm = (): boolean => {
-    const trimmedEmail = email.trim()
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const trimmedEmail = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
       setBannerAlert({
         type: "error",
         message: "Please enter a valid email address.",
-      })
-      return false
+      });
+      return false;
     }
 
     if (!password || password.length < 6) {
-      setPasswordError(true)
+      setPasswordError(true);
       setBannerAlert({
         type: "error",
         message: "Please enter your password (minimum 6 characters).",
-      })
-      return false
+      });
+      return false;
     }
 
-    return true
-  }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setBannerAlert(null)
-    setPasswordError(false)
+    e.preventDefault();
+    setBannerAlert(null);
+    setPasswordError(false);
 
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const response = await login({
         email: email.trim(),
         password,
-      })
+      });
 
       // ----------------------------------------------------------------------
       // 200 OK: Successful Login
       // ----------------------------------------------------------------------
-      // 1. Resolve role from login response
+      // 1. Resolve user payload from login response
+      const userPayload =
+        response?.data?.user ||
+        response?.user ||
+        response?.data ||
+        response;
+
       const rawRole = (
+        userPayload?.role ||
         response?.role ||
         response?.data?.role ||
-        response?.user?.role ||
-        response?.data?.user?.role ||
         ""
       )
         .toString()
         .toLowerCase()
-        .trim()
+        .trim();
 
       if (rawRole) {
-        localStorage.setItem("auth_user_role", rawRole)
+        localStorage.setItem("auth_user_role", rawRole);
       }
 
-      // 2. Refresh AuthContext state
-      const authenticatedUser = await refreshAuth()
+      // Immediately set user in AuthContext so isAuthenticated is synchronously true
+      setAuthUser(userPayload);
+
+      // 2. Synchronize full profile in background
+      refreshAuth().catch(() => {});
 
       // 3. Show success toast notification
       setToast({
         type: "success",
         title: "Success",
         message: "Logged in successfully!",
-      })
+      });
 
       // 4. Resolve effective role and route to dashboard
       const effectiveRole = (
         rawRole ||
-        authenticatedUser?.role ||
+        userPayload?.role ||
         localStorage.getItem("auth_user_role") ||
         ""
       )
         .toString()
         .toLowerCase()
-        .trim()
+        .trim();
 
       const targetDashboard =
         effectiveRole === "admin" || effectiveRole === "administrator"
           ? "/admin"
-          : "/discover"
+          : "/discover";
 
       setTimeout(() => {
-        navigate(targetDashboard, { replace: true })
-      }, 700)
+        navigate(targetDashboard, { replace: true });
+      }, 500);
     } catch (error: any) {
-      console.error("Login attempt failed:", error)
-      const status = error.response?.status
-      const responseData = error.response?.data
-      const backendMessage = responseData?.message || ""
+      const status = error.response?.status;
+      const responseData = error.response?.data;
+      const backendMessage = responseData?.message || "";
 
       // ----------------------------------------------------------------------
-      // 404 NOT FOUND: Account does not exist or email not yet verified
+      // 403 FORBIDDEN: Email not yet verified
+      // ----------------------------------------------------------------------
+      if (status === 403) {
+        const verifyText =
+          backendMessage ||
+          "Please verify your email address before logging in. Check your inbox for the verification link.";
+
+        setBannerAlert({
+          type: "warning",
+          message: verifyText,
+        });
+
+        setToast({
+          type: "warning",
+          title: "Verification Required",
+          message: verifyText,
+        });
+        return;
+      }
+
+      // ----------------------------------------------------------------------
+      // 404 NOT FOUND: Account does not exist
       // ----------------------------------------------------------------------
       if (status === 404) {
         const notFoundText =
           backendMessage ||
-          "Account not found or email not yet verified. Redirecting you to complete registration..."
+          "Account not found. Redirecting you to complete registration...";
 
         setBannerAlert({
           type: "warning",
           message: notFoundText,
-        })
+        });
 
         setToast({
           type: "warning",
           title: "Registration Required",
           message:
             "Account not found or email not yet verified. Redirecting to registration...",
-        })
+        });
 
         // Automatically navigate to /register with pre-filled email
         setTimeout(() => {
@@ -198,32 +227,32 @@ export function LoginForm({
               infoMessage:
                 "Please complete registration or request a fresh verification link.",
             },
-          })
-        }, 1800)
-        return
+          });
+        }, 1800);
+        return;
       }
 
       // ----------------------------------------------------------------------
       // 401 UNAUTHORIZED: Incorrect email or password
       // ----------------------------------------------------------------------
       if (status === 401) {
-        const authErrorText = "Incorrect email or password. Please try again."
+        const authErrorText = "Incorrect email or password. Please try again.";
 
         // Highlight password input with red border and clear the password
-        setPasswordError(true)
-        setPassword("")
+        setPasswordError(true);
+        setPassword("");
 
         setBannerAlert({
           type: "error",
           message: authErrorText,
-        })
+        });
 
         setToast({
           type: "error",
           title: "Authentication Failed",
           message: authErrorText,
-        })
-        return
+        });
+        return;
       }
 
       // ----------------------------------------------------------------------
@@ -234,13 +263,13 @@ export function LoginForm({
           backendMessage ||
           (Array.isArray(responseData?.errors)
             ? responseData.errors.join(", ")
-            : "Please enter a valid email address and password.")
+            : "Please enter a valid email address and password.");
 
         setBannerAlert({
           type: "error",
           message: validationErrorText,
-        })
-        return
+        });
+        return;
       }
 
       // ----------------------------------------------------------------------
@@ -248,22 +277,22 @@ export function LoginForm({
       // ----------------------------------------------------------------------
       const fallbackError =
         backendMessage ||
-        "Something went wrong on the server. Please try again later."
+        "Something went wrong on the server. Please try again later.";
 
       setBannerAlert({
         type: "error",
         message: fallbackError,
-      })
+      });
 
       setToast({
         type: "error",
         title: "Server Error",
         message: fallbackError,
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <>
@@ -323,9 +352,11 @@ export function LoginForm({
       >
         <FieldGroup className="bg-slate-900">
           <div className="flex flex-col items-center gap-1 text-center">
-            <h1 className="text-2xl font-bold text-white">Login to your account</h1>
+            <h1 className="text-2xl font-bold text-white">
+              Login to your account
+            </h1>
             <p className="text-sm text-balance text-gray-400">
-              Enter your email and password below to access Opportunity Radar
+              Enter your email and password below to access Oppora
             </p>
 
             {/* Inline Banner Alert */}
@@ -376,8 +407,8 @@ export function LoginForm({
               value={email}
               disabled={isSubmitting}
               onChange={(event) => {
-                setEmail(event.target.value)
-                if (bannerAlert) setBannerAlert(null)
+                setEmail(event.target.value);
+                if (bannerAlert) setBannerAlert(null);
               }}
               type="email"
               autoComplete="email"
@@ -412,9 +443,9 @@ export function LoginForm({
                 )}
                 value={password}
                 onChange={(event) => {
-                  setPassword(event.target.value)
-                  if (passwordError) setPasswordError(false)
-                  if (bannerAlert) setBannerAlert(null)
+                  setPassword(event.target.value);
+                  if (passwordError) setPasswordError(false);
+                  if (bannerAlert) setBannerAlert(null);
                 }}
                 placeholder="Enter your password"
                 autoComplete="current-password"
@@ -474,5 +505,5 @@ export function LoginForm({
         </FieldGroup>
       </form>
     </>
-  )
+  );
 }

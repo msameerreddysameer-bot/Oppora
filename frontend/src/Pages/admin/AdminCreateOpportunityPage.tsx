@@ -23,7 +23,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import AdminLayout from "@/components/admin/AdminLayout";
 import CroppedLogoPreview from "@/components/admin/CroppedLogoPreview";
 import LogoCropModal from "@/components/admin/LogoCropModal";
-import { type IOpportunity, type LogoCrop } from "@/demo/studentDemoData";
+import { type IOpportunity, type LogoCrop } from "@/types/studentTypesData";
 import {
   apiCreateOpportunity as apiCreateOpportunity,
   apiEditOpportunity as apiEditOpportunity,
@@ -149,46 +149,48 @@ export default function AdminCreateOpportunityPage() {
   // Prefill helper
   const populateForm = (data: IOpportunity) => {
     // 1. Basic Information
-    setTitle(data.title || "")
-    setOrganization(data.organization || "")
-    setCategory(data.category || "Scholarship")
-    setOrganizationType(data.organizationType || "private")
-    setLocation(data.location || "Remote")
+    setTitle(data.title || "");
+    setOrganization(data.organization || "");
+    setCategory(data.category || "Scholarship");
+    setOrganizationType(data.organizationType || "private");
+    setLocation(data.location || "Remote");
 
     // 2. Opportunity Details
-    setDescription(data.description || "")
+    setDescription(data.description || "");
 
     // 3. Eligibility
-    setEligibilitySummary(data.eligibilitySummary || "")
-    setEligibilityList(Array.isArray(data.eligibility) ? data.eligibility : [])
+    setEligibilitySummary(data.eligibilitySummary || "");
+    setEligibilityList(Array.isArray(data.eligibility) ? data.eligibility : []);
 
     // 4. Benefits
-    setBenefitsSummary(data.benefitsSummary || "")
-    setBenefitsList(Array.isArray(data.benefits) ? data.benefits : [])
+    setBenefitsSummary(data.benefitsSummary || "");
+    setBenefitsList(Array.isArray(data.benefits) ? data.benefits : []);
 
     // 5. Required Documents
-    setDocumentsList(Array.isArray(data.requiredDocuments) ? data.requiredDocuments : [])
+    setDocumentsList(
+      Array.isArray(data.requiredDocuments) ? data.requiredDocuments : []
+    );
 
     // 6. Important Dates
-    setStartDate(data.startDate || "")
-    setDeadline(data.deadline || "")
+    setStartDate(data.startDate || "");
+    setDeadline(data.deadline || "");
 
     // 7. Links
-    setOfficialSourceUrl(data.officialSourceUrl || "")
-    setApplicationUrl(data.applicationUrl || "")
+    setOfficialSourceUrl(data.officialSourceUrl || "");
+    setApplicationUrl(data.applicationUrl || "");
 
     if ((data as any).educationLevel) {
-      setEducationLevel((data as any).educationLevel)
+      setEducationLevel((data as any).educationLevel);
     }
 
     // Organization Logo & Saved Crop coordinates
-    const logoSrc = data.originalLogo || data.organizationLogo || null
-    setOriginalImage(logoSrc)
-    setCroppedPreview(data.organizationLogo || logoSrc)
+    const logoSrc = data.originalLogo || data.organizationLogo || null;
+    setOriginalImage(logoSrc);
+    setCroppedPreview(data.organizationLogo || logoSrc);
     if (data.logoCrop) {
-      setSavedCrop(data.logoCrop)
+      setSavedCrop(data.logoCrop);
     }
-  }
+  };
 
   // =========================================================================
   // [BACKEND API INTEGRATION POINT 1: FETCH OPPORTUNITY BY ID FOR EDITING]
@@ -209,8 +211,8 @@ export default function AdminCreateOpportunityPage() {
           populateForm(found);
         }
       }
-    } catch (err) {
-      console.error("Error loading opportunity from local cache:", err);
+    } catch {
+      // Local cache unavailable
     }
 
     // 2. Fetch fresh opportunity record from Backend Server
@@ -221,11 +223,8 @@ export default function AdminCreateOpportunityPage() {
         if (isMounted && oppData && oppData.title) {
           populateForm(oppData);
         }
-      } catch (err) {
-        console.info(
-          "[Admin Edit] Backend API not reachable, working with local cache.",
-          err,
-        );
+      } catch {
+        // Backend API not reachable, working with local cache
       }
     };
 
@@ -244,7 +243,7 @@ export default function AdminCreateOpportunityPage() {
   const scrollToField = (
     fieldId: string,
     section: FormSection,
-    message: string,
+    message: string
   ) => {
     setFormError(message);
     setActiveErrorField(fieldId);
@@ -270,7 +269,7 @@ export default function AdminCreateOpportunityPage() {
     ];
     if (!validTypes.includes(file.type)) {
       setFormError(
-        "Please upload a valid image (PNG, JPG/JPEG, SVG, or WebP).",
+        "Please upload a valid image (PNG, JPG/JPEG, SVG, or WebP)."
       );
       return;
     }
@@ -399,7 +398,7 @@ export default function AdminCreateOpportunityPage() {
         scrollToField(
           "field-logo",
           "basic",
-          "Organization logo is required before publishing. Please upload a logo.",
+          "Organization logo is required before publishing. Please upload a logo."
         );
         return;
       }
@@ -407,7 +406,7 @@ export default function AdminCreateOpportunityPage() {
         scrollToField(
           "field-organization",
           "basic",
-          "Organization name is required.",
+          "Organization name is required."
         );
         return;
       }
@@ -419,7 +418,7 @@ export default function AdminCreateOpportunityPage() {
         scrollToField(
           "field-deadline",
           "dates",
-          "Application deadline is required for publishing.",
+          "Application deadline is required for publishing."
         );
         return;
       }
@@ -427,7 +426,7 @@ export default function AdminCreateOpportunityPage() {
         scrollToField(
           "field-applicationUrl",
           "links",
-          "Application portal URL is required.",
+          "Application portal URL is required."
         );
         return;
       }
@@ -437,7 +436,7 @@ export default function AdminCreateOpportunityPage() {
         scrollToField(
           "field-title",
           "basic",
-          "Please enter a title or organization name to save as draft.",
+          "Please enter a title or organization name to save as draft."
         );
         return;
       }
@@ -455,46 +454,46 @@ export default function AdminCreateOpportunityPage() {
 
     // 2. Normalize enums and types for backend Zod validation schema
     const backendCategoryMap: Record<string, string> = {
-      scholarship: 'Scholarship',
-      internship: 'intership', // Notice: backend schema specifies 'intership'
-      intership: 'intership',
-      hackathon: 'hackathon',
-      competition: 'competition',
-      fellowship: 'fellowship',
-      research: 'research',
-      'open source': 'open-source',
-      'open-source': 'open-source',
-      workshop: 'workshop',
-    }
+      scholarship: "Scholarship",
+      internship: "intership", // Notice: backend schema specifies 'intership'
+      intership: "intership",
+      hackathon: "hackathon",
+      competition: "competition",
+      fellowship: "fellowship",
+      research: "research",
+      "open source": "open-source",
+      "open-source": "open-source",
+      workshop: "workshop",
+    };
 
     const backendOrgTypeMap: Record<string, string> = {
-      government: 'government',
-      private: 'private',
-      university: 'university',
-      ngo: 'ngo',
-      'start-up': 'start-up',
-      startup: 'start-up',
-      'non-profit': 'non-profit',
-      'non-Profit': 'non-profit',
-      'international organisation': 'international-organisation',
-      'international-organisation': 'international-organisation',
-    }
+      government: "government",
+      private: "private",
+      university: "university",
+      ngo: "ngo",
+      "start-up": "start-up",
+      startup: "start-up",
+      "non-profit": "non-profit",
+      "non-Profit": "non-profit",
+      "international organisation": "international-organisation",
+      "international-organisation": "international-organisation",
+    };
 
     const normalizedCategory =
-      backendCategoryMap[category.toLowerCase().trim()] || 'Scholarship'
+      backendCategoryMap[category.toLowerCase().trim()] || "Scholarship";
     const normalizedOrgType =
-      backendOrgTypeMap[organizationType.toLowerCase().trim()] || 'private'
+      backendOrgTypeMap[organizationType.toLowerCase().trim()] || "private";
 
     // Backend requires valid date strings that z.coerce.date() can parse
     const validStartDate =
       startDate.trim() && !isNaN(Date.parse(startDate.trim()))
         ? new Date(startDate.trim()).toISOString()
-        : new Date().toISOString()
+        : new Date().toISOString();
 
     const validDeadline =
       deadline.trim() && !isNaN(Date.parse(deadline.trim()))
         ? new Date(deadline.trim()).toISOString()
-        : new Date(Date.now() + 30 * 86400000).toISOString()
+        : new Date(Date.now() + 30 * 86400000).toISOString();
 
     // 3. Add text fields (key, value)
     formData.append("title", title.trim() || "Untitled Opportunity");
@@ -504,17 +503,27 @@ export default function AdminCreateOpportunityPage() {
     formData.append("location", location.trim() || "Remote");
     formData.append(
       "description",
-      description.trim() || `${title.trim() || "Opportunity"} offered by ${organization.trim() || "Organization"}`
+      description.trim() ||
+        `${title.trim() || "Opportunity"} offered by ${organization.trim() || "Organization"}`
     );
-    formData.append("eligibilitySummary", eligibilitySummary.trim() || "Open to all eligible students");
-    formData.append("benefitsSummary", benefitsSummary.trim() || "Competitive benefits & mentorship");
+    formData.append(
+      "eligibilitySummary",
+      eligibilitySummary.trim() || "Open to all eligible students"
+    );
+    formData.append(
+      "benefitsSummary",
+      benefitsSummary.trim() || "Competitive benefits & mentorship"
+    );
     formData.append("startDate", validStartDate);
     formData.append("deadline", validDeadline);
     formData.append(
       "officialSourceUrl",
       officialSourceUrl.trim() || applicationUrl.trim() || "https://google.com"
     );
-    formData.append("applicationUrl", applicationUrl.trim() || "https://google.com");
+    formData.append(
+      "applicationUrl",
+      applicationUrl.trim() || "https://google.com"
+    );
     formData.append("educationLevel", educationLevel || "undergraduate");
     formData.append(
       "status",
@@ -527,77 +536,72 @@ export default function AdminCreateOpportunityPage() {
     // -------------------------------------------------------------
     // Array 1: Benefits (Multer requires multiple keys to parse as Array)
     // -------------------------------------------------------------
-    const activeBenefits = benefitsList.map((b) => b.trim()).filter(Boolean)
+    const activeBenefits = benefitsList.map((b) => b.trim()).filter(Boolean);
     if (activeBenefits.length === 0) {
-      formData.append('benefits', 'Competitive benefits & mentorship')
-      formData.append('benefits', 'Official Recognition')
+      formData.append("benefits", "Competitive benefits & mentorship");
+      formData.append("benefits", "Official Recognition");
     } else if (activeBenefits.length === 1) {
-      formData.append('benefits', activeBenefits[0])
-      formData.append('benefits', activeBenefits[0])
+      formData.append("benefits", activeBenefits[0]);
+      formData.append("benefits", activeBenefits[0]);
     } else {
       activeBenefits.forEach((benefit) => {
-        formData.append('benefits', benefit)
-      })
+        formData.append("benefits", benefit);
+      });
     }
 
     // -------------------------------------------------------------
     // Array 2: Required Documents
     // -------------------------------------------------------------
-    const activeDocuments = documentsList.map((d) => d.trim()).filter(Boolean)
+    const activeDocuments = documentsList.map((d) => d.trim()).filter(Boolean);
     if (activeDocuments.length === 1) {
-      formData.append('requiredDocuments', activeDocuments[0])
-      formData.append('requiredDocuments', activeDocuments[0])
+      formData.append("requiredDocuments", activeDocuments[0]);
+      formData.append("requiredDocuments", activeDocuments[0]);
     } else {
       activeDocuments.forEach((doc) => {
-        formData.append('requiredDocuments', doc)
-      })
+        formData.append("requiredDocuments", doc);
+      });
     }
 
     // -------------------------------------------------------------
     // Array 3: Eligibility Requirements
     // -------------------------------------------------------------
-    const activeEligibility = eligibilityList.map((e) => e.trim()).filter(Boolean)
+    const activeEligibility = eligibilityList
+      .map((e) => e.trim())
+      .filter(Boolean);
     if (activeEligibility.length === 0) {
-      formData.append('eligibility', 'All eligible applicants')
-      formData.append('eligibility', 'Enrolled students worldwide')
+      formData.append("eligibility", "All eligible applicants");
+      formData.append("eligibility", "Enrolled students worldwide");
     } else if (activeEligibility.length === 1) {
-      formData.append('eligibility', activeEligibility[0])
-      formData.append('eligibility', activeEligibility[0])
+      formData.append("eligibility", activeEligibility[0]);
+      formData.append("eligibility", activeEligibility[0]);
     } else {
       activeEligibility.forEach((req) => {
-        formData.append('eligibility', req)
-      })
+        formData.append("eligibility", req);
+      });
     }
 
-        // -------------------------------------------------------------
+    // -------------------------------------------------------------
     // Logo File Attachment
     // -------------------------------------------------------------
-    if (croppedPreview && croppedPreview.startsWith('data:')) {
+    if (croppedPreview && croppedPreview.startsWith("data:")) {
       // Cropped image: Convert base64 canvas to a real binary file
-      const fileName = logoFile?.name ? `cropped-${logoFile.name}` : 'organization-logo.png'
-      const binaryFile = dataURLtoFile(croppedPreview, fileName)
-      formData.append('organizationLogo', binaryFile)
+      const fileName = logoFile?.name
+        ? `cropped-${logoFile.name}`
+        : "organization-logo.png";
+      const binaryFile = dataURLtoFile(croppedPreview, fileName);
+      formData.append("organizationLogo", binaryFile);
     } else if (logoFile) {
       // Uncropped image: Attach raw file directly
-      formData.append('organizationLogo', logoFile)
+      formData.append("organizationLogo", logoFile);
     } else if (finalLogoUrl) {
       // Existing remote URL (for edit mode)
-      formData.append('organizationLogoUrl', finalLogoUrl)
+      formData.append("organizationLogoUrl", finalLogoUrl);
     }
 
     // Optional: Save crop coordinates JSON
     if (savedCrop) {
-      formData.append('logoCrop', JSON.stringify(savedCrop))
+      formData.append("logoCrop", JSON.stringify(savedCrop));
     }
-
-    // -------------------------------------------------------------
-    // Debug log: View all keys and values in Chrome Console (F12)
-    // -------------------------------------------------------------
-    console.group('🚀 [Admin Opportunity] Submitting FormData')
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value)
-    }
-    console.groupEnd()
 
     try {
       const existingStr = localStorage.getItem("admin_managed_opportunities");
@@ -657,21 +661,18 @@ export default function AdminCreateOpportunityPage() {
         }
         localStorage.setItem(
           "admin_managed_opportunities",
-          JSON.stringify(list),
+          JSON.stringify(list)
         );
 
         // =====================================================================
         // [BACKEND API INTEGRATION POINT 2: UPDATE OPPORTUNITY]
         // =====================================================================
         // Hits PATCH /opportunity/:id via opportunityService.editOpportunity()
-        
 
-        
         try {
-
           await apiEditOpportunity(editId, formData);
-        } catch (apiErr) {
-          console.warn("[API Warning] Could not sync edit to backend:", apiErr);
+        } catch {
+          // Silently proceed
         }
       } else {
         const newOpportunity: IOpportunity = {
@@ -714,35 +715,30 @@ export default function AdminCreateOpportunityPage() {
         const updatedList = [newOpportunity, ...list];
         localStorage.setItem(
           "admin_managed_opportunities",
-          JSON.stringify(updatedList),
+          JSON.stringify(updatedList)
         );
 
         // =====================================================================
         // [BACKEND API INTEGRATION POINT 3: CREATE NEW OPPORTUNITY]
         // =====================================================================
         // Hits POST /opportunity/ via opportunityService.createOpportunity()
-               try {
-          const res = await apiCreateOpportunity(formData)
-          console.log('[API Success] Server response:', res)
+        try {
+          const res = await apiCreateOpportunity(formData);
 
           // If backend returns the saved MongoDB ID, assign it:
-          const backendId = res?.data?._id || res?._id
+          const backendId = res?.data?._id || res?._id;
           if (backendId) {
-            newOpportunity._id = backendId
+            newOpportunity._id = backendId;
           }
         } catch (apiErr: any) {
-          console.error(
-            '[API Error Response]:',
-            apiErr?.response?.data || apiErr
-          )
           const errMsg =
             apiErr?.response?.data?.message ||
             apiErr?.response?.data?.error ||
             apiErr?.message ||
-            'Failed to create opportunity on backend server.'
-          setFormError(errMsg)
-          setIsPublishing(false)
-          return
+            "Failed to create opportunity on backend server.";
+          setFormError(errMsg);
+          setIsPublishing(false);
+          return;
         }
       }
 
@@ -750,11 +746,10 @@ export default function AdminCreateOpportunityPage() {
         setIsPublishing(false);
         navigate("/admin/opportunities");
       }, 300);
-    } catch (err) {
-      console.error("Failed to save opportunity:", err);
+    } catch {
       setIsPublishing(false);
       setFormError(
-        "Failed to save opportunity. Please check local storage capacity.",
+        "Failed to save opportunity. Please check local storage capacity."
       );
     }
   };
@@ -1165,7 +1160,8 @@ export default function AdminCreateOpportunityPage() {
 
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-200">
-                      Target Education Level <span className="text-rose-400">*</span>
+                      Target Education Level{" "}
+                      <span className="text-rose-400">*</span>
                     </label>
                     <select
                       value={educationLevel}
@@ -1258,7 +1254,8 @@ export default function AdminCreateOpportunityPage() {
                   <div className="space-y-2">
                     {eligibilityList.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-slate-800 bg-slate-950/40 px-4 py-3.5 text-xs text-slate-500 italic">
-                        No requirements added yet. Type a requirement below and click &quot;Add Requirement&quot;.
+                        No requirements added yet. Type a requirement below and
+                        click &quot;Add Requirement&quot;.
                       </div>
                     ) : (
                       eligibilityList.map((req, idx) => (
@@ -1266,7 +1263,9 @@ export default function AdminCreateOpportunityPage() {
                           key={idx}
                           className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-2.5 text-xs text-slate-200"
                         >
-                          <span className="flex-1 leading-relaxed">• {req}</span>
+                          <span className="flex-1 leading-relaxed">
+                            • {req}
+                          </span>
                           <button
                             type="button"
                             onClick={() => handleRemoveRequirement(idx)}
@@ -1346,7 +1345,8 @@ export default function AdminCreateOpportunityPage() {
                   <div className="space-y-2">
                     {benefitsList.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-slate-800 bg-slate-950/40 px-4 py-3.5 text-xs text-slate-500 italic">
-                        No benefits added yet. Type a benefit below and click &quot;Add Benefit&quot;.
+                        No benefits added yet. Type a benefit below and click
+                        &quot;Add Benefit&quot;.
                       </div>
                     ) : (
                       benefitsList.map((ben, idx) => (
@@ -1354,7 +1354,9 @@ export default function AdminCreateOpportunityPage() {
                           key={idx}
                           className="flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/70 px-4 py-2.5 text-xs text-slate-200"
                         >
-                          <span className="flex-1 leading-relaxed">• {ben}</span>
+                          <span className="flex-1 leading-relaxed">
+                            • {ben}
+                          </span>
                           <button
                             type="button"
                             onClick={() => handleRemoveBenefit(idx)}
@@ -1509,7 +1511,7 @@ export default function AdminCreateOpportunityPage() {
                           tabIndex={-1}
                           onChange={(e) => {
                             if (e.target.value) {
-                              setStartDate(e.target.value)
+                              setStartDate(e.target.value);
                             }
                           }}
                           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
@@ -1544,7 +1546,7 @@ export default function AdminCreateOpportunityPage() {
                           tabIndex={-1}
                           onChange={(e) => {
                             if (e.target.value) {
-                              setDeadline(e.target.value)
+                              setDeadline(e.target.value);
                             }
                           }}
                           className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"

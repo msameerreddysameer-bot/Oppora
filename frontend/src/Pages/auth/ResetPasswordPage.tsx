@@ -3,7 +3,6 @@ import {
   AlertCircle,
   ArrowLeft,
   CheckCircle2,
-  Compass,
   Eye,
   EyeOff,
   KeyRound,
@@ -46,23 +45,19 @@ export default function ResetPasswordPage({
 
     window.history.back();
   };
- 
 
-    const Navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const token = searchParams.get("token") || "";
-
+  const Navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token") || "";
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    
-    
-
-
     if (password.length < MIN_PASSWORD_LENGTH) {
       setResetState("error");
-      setErrorMessage(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      setErrorMessage(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`
+      );
       return;
     }
 
@@ -71,23 +66,14 @@ export default function ResetPasswordPage({
       setErrorMessage("Passwords do not match.");
       return;
     }
-   try {
-        const response = await resetPassword(token, password);
-
-    setResetState("success");
-
-    console.log(response);
-
-    Navigate("/login");
-   }
-   catch (error) {
-    console.error("Password reset failed:", error);
-    setResetState("error");
-    setErrorMessage("We could not update your password. Please try again.");
-   }
-
-    // setResetState("submitting");
-    // setErrorMessage("");
+    try {
+      await resetPassword(token, password);
+      setResetState("success");
+      Navigate("/login");
+    } catch {
+      setResetState("error");
+      setErrorMessage("We could not update your password. Please try again.");
+    }
 
     // try {
     //   await onSubmit?.(password);
@@ -120,9 +106,12 @@ export default function ResetPasswordPage({
                   <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-900/50 text-blue-300 ring-1 ring-blue-800">
                     <KeyRound size={25} aria-hidden="true" />
                   </div>
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Create a new password</h1>
+                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    Create a new password
+                  </h1>
                   <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-slate-400 sm:text-base">
-                    Choose a strong password to secure your Opportunity Radar account.
+                    Choose a strong password to secure your Oppora
+                    account.
                   </p>
                 </div>
 
@@ -139,7 +128,9 @@ export default function ResetPasswordPage({
                         setPassword(value);
                         clearError();
                       }}
-                      onToggleVisibility={() => setShowPassword((visible) => !visible)}
+                      onToggleVisibility={() =>
+                        setShowPassword((visible) => !visible)
+                      }
                     />
 
                     <PasswordField
@@ -153,15 +144,21 @@ export default function ResetPasswordPage({
                         setConfirmPassword(value);
                         clearError();
                       }}
-                      onToggleVisibility={() => setShowConfirmPassword((visible) => !visible)}
+                      onToggleVisibility={() =>
+                        setShowConfirmPassword((visible) => !visible)
+                      }
                     />
 
                     <p className="mt-3 text-xs leading-5 text-slate-500">
-                      Use at least {MIN_PASSWORD_LENGTH} characters. Avoid reusing a password from another account.
+                      Use at least {MIN_PASSWORD_LENGTH} characters. Avoid
+                      reusing a password from another account.
                     </p>
 
                     {resetState === "error" && (
-                      <p className="mt-4 flex items-center gap-1.5 text-sm text-red-400" role="alert">
+                      <p
+                        className="mt-4 flex items-center gap-1.5 text-sm text-red-400"
+                        role="alert"
+                      >
                         <AlertCircle size={15} aria-hidden="true" />
                         {errorMessage}
                       </p>
@@ -175,7 +172,11 @@ export default function ResetPasswordPage({
                     >
                       {resetState === "submitting" ? (
                         <>
-                          <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+                          <Loader2
+                            size={16}
+                            className="animate-spin"
+                            aria-hidden="true"
+                          />
                           Updating password...
                         </>
                       ) : (
@@ -241,9 +242,17 @@ function PasswordField({
           type="button"
           onClick={onToggleVisibility}
           className="absolute right-1 top-1 flex h-9 w-9 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-800 hover:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
-          aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+          aria-label={
+            visible
+              ? `Hide ${label.toLowerCase()}`
+              : `Show ${label.toLowerCase()}`
+          }
         >
-          {visible ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}
+          {visible ? (
+            <EyeOff size={17} aria-hidden="true" />
+          ) : (
+            <Eye size={17} aria-hidden="true" />
+          )}
         </button>
       </div>
     </div>
@@ -258,7 +267,8 @@ function SuccessState({ onBackToLogin }: { onBackToLogin: () => void }) {
       </div>
       <h1 className="text-2xl font-bold sm:text-3xl">Password updated</h1>
       <p className="mt-3 text-sm leading-6 text-slate-400">
-        Your password has been changed successfully. You can now log in with your new password.
+        Your password has been changed successfully. You can now log in with
+        your new password.
       </p>
       <button
         type="button"
@@ -279,13 +289,24 @@ function SecurityPanel() {
         <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-900">
           <ShieldCheck size={24} aria-hidden="true" />
         </div>
-        <h2 className="text-3xl font-bold leading-tight lg:text-4xl">Your account security matters.</h2>
+        <h2 className="text-3xl font-bold leading-tight lg:text-4xl">
+          Your account security matters.
+        </h2>
         <p className="mt-5 text-base leading-7 text-slate-400">
-          Create a password that keeps your Opportunity Radar account private and protected.
+          Create a password that keeps your Oppora account private
+          and protected.
         </p>
         <div className="mt-8 flex flex-col gap-5 lg:mt-10">
-          <SecurityPoint icon={<KeyRound size={18} aria-hidden="true" />} title="Use a strong password" description="Choose a password you do not use on another website or account." />
-          <SecurityPoint icon={<Mail size={18} aria-hidden="true" />} title="Keep your account protected" description="Your new password will secure access to your saved opportunities and applications." />
+          <SecurityPoint
+            icon={<KeyRound size={18} aria-hidden="true" />}
+            title="Use a strong password"
+            description="Choose a password you do not use on another website or account."
+          />
+          <SecurityPoint
+            icon={<Mail size={18} aria-hidden="true" />}
+            title="Keep your account protected"
+            description="Your new password will secure access to your saved opportunities and applications."
+          />
         </div>
       </div>
     </aside>
@@ -325,10 +346,16 @@ function AuthHeader({ onBackToLogin }: { onBackToLogin: () => void }) {
             to="/"
             className="flex items-center gap-2 rounded-lg text-left transition-opacity hover:opacity-80"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-900">
-              <Compass size={18} aria-hidden="true" className="text-white" />
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white p-1.5 shadow-md shadow-slate-950/40">
+              <img
+                src="/oppora-logo.svg"
+                alt="Oppora Logo"
+                className="w-full h-full object-contain"
+              />
             </span>
-            <span className="font-semibold tracking-tight text-white hidden sm:inline">Opportunity Radar</span>
+            <span className="font-semibold tracking-tight text-white hidden sm:inline">
+              Oppora
+            </span>
           </Link>
         </div>
         <button

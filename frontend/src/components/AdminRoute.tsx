@@ -1,12 +1,12 @@
-import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from './AuthContext'
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 
 /**
  * AdminRoute: Secures admin-only endpoints against unauthorized student/user access.
  * Checks authenticated user role and redirects safely to /discover if not an admin.
  */
 export default function AdminRoute() {
-  const { user, isAuthenticated, isLoading } = useAuth()
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -18,29 +18,31 @@ export default function AdminRoute() {
           </span>
         </div>
       </div>
-    )
+    );
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
   // Determine role safely from authenticated user state or cached auth role
-  const rawUser: any = user
+  const rawUser: any = user;
   const effectiveRole = (
     rawUser?.role ||
     rawUser?.user?.role ||
-    localStorage.getItem('auth_user_role') ||
-    ''
-  ).toString().toLowerCase().trim()
+    localStorage.getItem("auth_user_role") ||
+    ""
+  )
+    .toString()
+    .toLowerCase()
+    .trim();
 
-  const isAdmin = effectiveRole === 'admin' || effectiveRole === 'administrator'
+  const isAdmin =
+    effectiveRole === "admin" || effectiveRole === "administrator";
 
   if (!isAdmin) {
-    console.warn('Unauthorized admin access attempt. Role:', effectiveRole, 'Redirecting to student dashboard.')
-    return <Navigate to="/discover" replace />
+    return <Navigate to="/discover" replace />;
   }
 
-  return <Outlet />
+  return <Outlet />;
 }
-

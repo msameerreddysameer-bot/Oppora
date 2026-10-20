@@ -31,11 +31,14 @@ function FallbackRedirect() {
     const effectiveRole = (
       rawUser?.role ||
       rawUser?.user?.role ||
-      localStorage.getItem('auth_user_role') ||
-      ''
-    ).toString().toLowerCase().trim();
+      localStorage.getItem("auth_user_role") ||
+      ""
+    )
+      .toString()
+      .toLowerCase()
+      .trim();
 
-    if (effectiveRole === 'admin' || effectiveRole === 'administrator') {
+    if (effectiveRole === "admin" || effectiveRole === "administrator") {
       return <Navigate to="/admin" replace />;
     }
     return <Navigate to="/discover" replace />;
@@ -67,7 +70,10 @@ export default function AppRoutes() {
         <Route path="/saved" element={<SavedOpportunitiesPage />} />
         <Route path="/applications" element={<MyApplicationsPage />} />
         <Route path="/profile" element={<StudentProfilePage />} />
-        <Route path="/opportunities/:opportunityId" element={<OpportunityDetailsPage />} />
+        <Route
+          path="/opportunities/:opportunityId"
+          element={<OpportunityDetailsPage />}
+        />
       </Route>
 
       {/* 3. Guest-only authentication routes (blocked for logged-in users) */}

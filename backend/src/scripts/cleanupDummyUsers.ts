@@ -15,10 +15,14 @@ const cleanupDummyUsers = async () => {
     console.log("Connected successfully!");
 
     // 1. Fetch all users to display
-    const allUsers = await User.find({}).select("FullName email role isEmailVerified createdAt");
+    const allUsers = await User.find({}).select(
+      "FullName email role isEmailVerified createdAt"
+    );
     console.log(`\nFound ${allUsers.length} total users in database:`);
     allUsers.forEach((u: any, i: number) => {
-      console.log(`  [${i + 1}] ID: ${u._id} | Email: ${u.email} | Name: ${u.FullName} | Role: ${u.role} | Verified: ${u.isEmailVerified}`);
+      console.log(
+        `  [${i + 1}] ID: ${u._id} | Email: ${u.email} | Name: ${u.FullName} | Role: ${u.role} | Verified: ${u.isEmailVerified}`
+      );
     });
 
     // Specify criteria for dummy users:
@@ -32,8 +36,12 @@ const cleanupDummyUsers = async () => {
     };
 
     const dummyUsers = await User.find(dummyFilter);
-    console.log(`\nFound ${dummyUsers.length} dummy/test user(s) matching criteria:`);
-    dummyUsers.forEach((u: any) => console.log(`  - ${u.email} (${u.FullName})`));
+    console.log(
+      `\nFound ${dummyUsers.length} dummy/test user(s) matching criteria:`
+    );
+    dummyUsers.forEach((u: any) =>
+      console.log(`  - ${u.email} (${u.FullName})`)
+    );
 
     if (dummyUsers.length === 0) {
       console.log("\nNo dummy users found matching the filter.");
@@ -44,18 +52,23 @@ const cleanupDummyUsers = async () => {
     const dummyUserIds = dummyUsers.map((u: any) => u._id);
 
     // 2. Cascade delete related records
-    const [deletedApps, deletedSaved, deletedTokens, deletedUsers] = await Promise.all([
-      Application.deleteMany({ user: { $in: dummyUserIds } } as any),
-      SavedOpportunity.deleteMany({ user: { $in: dummyUserIds } } as any),
-      VerificationEmail.deleteMany({ userId: { $in: dummyUserIds } } as any),
-      User.deleteMany({ _id: { $in: dummyUserIds } } as any),
-    ]);
+    const [deletedApps, deletedSaved, deletedTokens, deletedUsers] =
+      await Promise.all([
+        Application.deleteMany({ user: { $in: dummyUserIds } } as any),
+        SavedOpportunity.deleteMany({ user: { $in: dummyUserIds } } as any),
+        VerificationEmail.deleteMany({ userId: { $in: dummyUserIds } } as any),
+        User.deleteMany({ _id: { $in: dummyUserIds } } as any),
+      ]);
 
     console.log("\n✅ Cleanup Results:");
     console.log(`  - Deleted Users: ${deletedUsers.deletedCount}`);
     console.log(`  - Deleted Applications: ${deletedApps.deletedCount}`);
-    console.log(`  - Deleted Saved Opportunities: ${deletedSaved.deletedCount}`);
-    console.log(`  - Deleted Verification Tokens: ${deletedTokens.deletedCount}`);
+    console.log(
+      `  - Deleted Saved Opportunities: ${deletedSaved.deletedCount}`
+    );
+    console.log(
+      `  - Deleted Verification Tokens: ${deletedTokens.deletedCount}`
+    );
 
     console.log("\n🎉 Dummy user data removed successfully!");
   } catch (error) {
@@ -67,4 +80,3 @@ const cleanupDummyUsers = async () => {
 };
 
 cleanupDummyUsers();
-

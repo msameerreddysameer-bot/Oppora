@@ -13,6 +13,10 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+
   let error = err;
 
   // Normalize non-ApiError instances into ApiError
@@ -36,14 +40,29 @@ export const errorHandler = (
 
   const statusCode = error.statusCode || 500;
 
+  // Log unexpected internal server errors (500) for diagnostic tracking
+  // Routine validation or auth rejections (400, 401, 404, 409) do not produce noisy server logs
+  if (statusCode >= 500) {
+    console.error(
+      `[Server Error 500] ${req.method} ${req.originalUrl}:`,
+      error.message
+    );
+  }
+
+  // In production, mask raw server error details to protect internal schema and database info
+  const isProduction = process.env.NODE_ENV === "production";
+  const safeMessage =
+    statusCode >= 500 && isProduction
+      ? "Internal server error. Please try again later."
+      : error.message || "Something went wrong";
+
   const response = {
     statusCode,
     success: false,
-    message: error.message || "Something went wrong",
+    message: safeMessage,
     errors: error.errors || [],
     data: null,
   };
 
   return res.status(statusCode).json(response);
 };
-

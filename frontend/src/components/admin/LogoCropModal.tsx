@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from "react";
 import {
   Check,
   Maximize2,
@@ -7,19 +7,19 @@ import {
   X,
   ZoomIn,
   ZoomOut,
-} from 'lucide-react'
-import { type LogoCrop } from '@/demo/studentDemoData'
+} from "lucide-react";
+import { type LogoCrop } from "@/types/studentTypesData";
 
 interface LogoCropModalProps {
-  isOpen: boolean
-  imageSrc: string | null
-  initialCrop?: LogoCrop | null
-  onClose: () => void
+  isOpen: boolean;
+  imageSrc: string | null;
+  initialCrop?: LogoCrop | null;
+  onClose: () => void;
   onSave: (result: {
-    croppedPreviewUrl: string
-    originalImageUrl: string
-    crop: LogoCrop
-  }) => void
+    croppedPreviewUrl: string;
+    originalImageUrl: string;
+    crop: LogoCrop;
+  }) => void;
 }
 
 /**
@@ -38,167 +38,184 @@ export default function LogoCropModal({
   onClose,
   onSave,
 }: LogoCropModalProps) {
-  const [zoom, setZoom] = useState(1)
-  const [rotation, setRotation] = useState(0)
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const [baseScale, setBaseScale] = useState(1)
-  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 })
-  const [cropBoxSize, setCropBoxSize] = useState(220) // Resizable crop square
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [baseScale, setBaseScale] = useState(1);
+  const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
+  const [cropBoxSize, setCropBoxSize] = useState(220); // Resizable crop square
 
   // Drag tracking
-  const [isDragging, setIsDragging] = useState(false)
-  const dragStartRef = useRef({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
 
-  const imgRef = useRef<HTMLImageElement>(null)
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  const VIEWPORT_SIZE = 320
+  const VIEWPORT_SIZE = 320;
 
   useEffect(() => {
-    if (!isOpen || !imageSrc) return
-    setRotation(0)
-  }, [isOpen, imageSrc])
+    if (!isOpen || !imageSrc) return;
+    setRotation(0);
+  }, [isOpen, imageSrc]);
 
-  if (!isOpen || !imageSrc) return null
+  if (!isOpen || !imageSrc) return null;
 
   const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { naturalWidth, naturalHeight } = e.currentTarget
-    setNaturalSize({ width: naturalWidth, height: naturalHeight })
+    const { naturalWidth, naturalHeight } = e.currentTarget;
+    setNaturalSize({ width: naturalWidth, height: naturalHeight });
 
-    const fitScale = Math.max(cropBoxSize / naturalWidth, cropBoxSize / naturalHeight)
-    setBaseScale(fitScale)
+    const fitScale = Math.max(
+      cropBoxSize / naturalWidth,
+      cropBoxSize / naturalHeight
+    );
+    setBaseScale(fitScale);
 
     // Restore exact saved crop if provided
     if (initialCrop && initialCrop.width > 0 && initialCrop.height > 0) {
-      const restoredWdisp = cropBoxSize / initialCrop.width
-      const restoredZoom = Math.max(0.5, Math.min(4, restoredWdisp / (naturalWidth * fitScale)))
-      const finalWdisp = naturalWidth * fitScale * restoredZoom
-      const finalHdisp = naturalHeight * fitScale * restoredZoom
+      const restoredWdisp = cropBoxSize / initialCrop.width;
+      const restoredZoom = Math.max(
+        0.5,
+        Math.min(4, restoredWdisp / (naturalWidth * fitScale))
+      );
+      const finalWdisp = naturalWidth * fitScale * restoredZoom;
+      const finalHdisp = naturalHeight * fitScale * restoredZoom;
 
-      const restoredDx = finalWdisp / 2 - cropBoxSize / 2 - initialCrop.x * finalWdisp
-      const restoredDy = finalHdisp / 2 - cropBoxSize / 2 - initialCrop.y * finalHdisp
+      const restoredDx =
+        finalWdisp / 2 - cropBoxSize / 2 - initialCrop.x * finalWdisp;
+      const restoredDy =
+        finalHdisp / 2 - cropBoxSize / 2 - initialCrop.y * finalHdisp;
 
-      setZoom(restoredZoom)
-      setOffset({ x: restoredDx, y: restoredDy })
+      setZoom(restoredZoom);
+      setOffset({ x: restoredDx, y: restoredDy });
     } else {
-      setZoom(1)
-      setOffset({ x: 0, y: 0 })
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
     }
-  }
+  };
 
   // Drag Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-    dragStartRef.current = { x: e.clientX - offset.x, y: e.clientY - offset.y }
-  }
+    e.preventDefault();
+    setIsDragging(true);
+    dragStartRef.current = { x: e.clientX - offset.x, y: e.clientY - offset.y };
+  };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return
+    if (!isDragging) return;
     setOffset({
       x: e.clientX - dragStartRef.current.x,
       y: e.clientY - dragStartRef.current.y,
-    })
-  }
+    });
+  };
 
-  const handleMouseUp = () => setIsDragging(false)
+  const handleMouseUp = () => setIsDragging(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 1) {
-      const touch = e.touches[0]
-      setIsDragging(true)
-      dragStartRef.current = { x: touch.clientX - offset.x, y: touch.clientY - offset.y }
+      const touch = e.touches[0];
+      setIsDragging(true);
+      dragStartRef.current = {
+        x: touch.clientX - offset.x,
+        y: touch.clientY - offset.y,
+      };
     }
-  }
+  };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isDragging || e.touches.length !== 1) return
-    const touch = e.touches[0]
+    if (!isDragging || e.touches.length !== 1) return;
+    const touch = e.touches[0];
     setOffset({
       x: touch.clientX - dragStartRef.current.x,
       y: touch.clientY - dragStartRef.current.y,
-    })
-  }
+    });
+  };
 
-  const handleTouchEnd = () => setIsDragging(false)
+  const handleTouchEnd = () => setIsDragging(false);
 
   const handleRotate = () => {
-    setRotation((prev) => (prev + 90) % 360)
-  }
+    setRotation((prev) => (prev + 90) % 360);
+  };
 
   // Compute Normalized LogoCrop
   const calculateNormalizedCrop = (): LogoCrop => {
     if (!naturalSize.width || !naturalSize.height) {
-      return { x: 0, y: 0, width: 1, height: 1 }
+      return { x: 0, y: 0, width: 1, height: 1 };
     }
 
-    const currentScale = baseScale * zoom
-    const wDisp = naturalSize.width * currentScale
-    const hDisp = naturalSize.height * currentScale
+    const currentScale = baseScale * zoom;
+    const wDisp = naturalSize.width * currentScale;
+    const hDisp = naturalSize.height * currentScale;
 
-    const xRel = wDisp / 2 - cropBoxSize / 2 - offset.x
-    const yRel = hDisp / 2 - cropBoxSize / 2 - offset.y
+    const xRel = wDisp / 2 - cropBoxSize / 2 - offset.x;
+    const yRel = hDisp / 2 - cropBoxSize / 2 - offset.y;
 
-    const normX = Math.max(0, Math.min(1, xRel / wDisp))
-    const normY = Math.max(0, Math.min(1, yRel / hDisp))
-    const normW = Math.max(0.05, Math.min(1 - normX, cropBoxSize / wDisp))
-    const normH = normW // Strictly 1:1
+    const normX = Math.max(0, Math.min(1, xRel / wDisp));
+    const normY = Math.max(0, Math.min(1, yRel / hDisp));
+    const normW = Math.max(0.05, Math.min(1 - normX, cropBoxSize / wDisp));
+    const normH = normW; // Strictly 1:1
 
     return {
       x: Number(normX.toFixed(4)),
       y: Number(normY.toFixed(4)),
       width: Number(normW.toFixed(4)),
       height: Number(normH.toFixed(4)),
-    }
-  }
+    };
+  };
 
   // Export cropped 1:1 preview and normalized metadata
   const handleSaveCrop = () => {
-    const cropMetadata = calculateNormalizedCrop()
+    const cropMetadata = calculateNormalizedCrop();
 
-    const canvas = document.createElement('canvas')
-    const OUTPUT_SIZE = 400
-    canvas.width = OUTPUT_SIZE
-    canvas.height = OUTPUT_SIZE
-    const ctx = canvas.getContext('2d')
+    const canvas = document.createElement("canvas");
+    const OUTPUT_SIZE = 400;
+    canvas.width = OUTPUT_SIZE;
+    canvas.height = OUTPUT_SIZE;
+    const ctx = canvas.getContext("2d");
 
     if (!ctx || !naturalSize.width || !naturalSize.height) {
       onSave({
         croppedPreviewUrl: imageSrc,
         originalImageUrl: imageSrc,
         crop: cropMetadata,
-      })
-      return
+      });
+      return;
     }
 
-    ctx.imageSmoothingEnabled = true
-    ctx.imageSmoothingQuality = 'high'
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
 
-    const currentScale = baseScale * zoom
-    const scaleRatio = OUTPUT_SIZE / cropBoxSize
+    const currentScale = baseScale * zoom;
+    const scaleRatio = OUTPUT_SIZE / cropBoxSize;
 
-    ctx.translate(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2)
-    ctx.rotate((rotation * Math.PI) / 180)
-    ctx.translate(offset.x * scaleRatio, offset.y * scaleRatio)
+    ctx.translate(OUTPUT_SIZE / 2, OUTPUT_SIZE / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.translate(offset.x * scaleRatio, offset.y * scaleRatio);
 
-    const drawWidth = naturalSize.width * currentScale * scaleRatio
-    const drawHeight = naturalSize.height * currentScale * scaleRatio
+    const drawWidth = naturalSize.width * currentScale * scaleRatio;
+    const drawHeight = naturalSize.height * currentScale * scaleRatio;
 
-    const img = imgRef.current
+    const img = imgRef.current;
     if (img) {
-      ctx.drawImage(img, -drawWidth / 2, -drawHeight / 2, drawWidth, drawHeight)
+      ctx.drawImage(
+        img,
+        -drawWidth / 2,
+        -drawHeight / 2,
+        drawWidth,
+        drawHeight
+      );
     }
 
-    const croppedBase64 = canvas.toDataURL('image/png', 0.95)
+    const croppedBase64 = canvas.toDataURL("image/png", 0.95);
 
     onSave({
       croppedPreviewUrl: croppedBase64,
       originalImageUrl: imageSrc,
       crop: cropMetadata,
-    })
-  }
+    });
+  };
 
   // Live preview preview metrics
-  const activeCrop = calculateNormalizedCrop()
+  const activeCrop = calculateNormalizedCrop();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
@@ -206,7 +223,9 @@ export default function LogoCropModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
-            <h3 className="text-base font-bold text-white">Crop Organization Logo</h3>
+            <h3 className="text-base font-bold text-white">
+              Crop Organization Logo
+            </h3>
             <p className="text-xs text-slate-400 mt-0.5">
               1:1 square crop. Move and scale to center your brand logo.
             </p>
@@ -243,7 +262,7 @@ export default function LogoCropModal({
               transform: `translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg) scale(${
                 baseScale * zoom
               })`,
-              transformOrigin: 'center center',
+              transformOrigin: "center center",
             }}
           />
 
@@ -293,10 +312,10 @@ export default function LogoCropModal({
               <button
                 type="button"
                 onClick={() => {
-                  setOffset({ x: 0, y: 0 })
-                  setZoom(1)
-                  setRotation(0)
-                  setCropBoxSize(220)
+                  setOffset({ x: 0, y: 0 });
+                  setZoom(1);
+                  setRotation(0);
+                  setCropBoxSize(220);
                 }}
                 className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-700"
               >
@@ -309,7 +328,9 @@ export default function LogoCropModal({
               <span className="text-[11px] text-slate-400">Crop Area:</span>
               <button
                 type="button"
-                onClick={() => setCropBoxSize((prev) => Math.max(160, prev - 20))}
+                onClick={() =>
+                  setCropBoxSize((prev) => Math.max(160, prev - 20))
+                }
                 className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white"
                 title="Shrink Crop Box"
               >
@@ -317,7 +338,9 @@ export default function LogoCropModal({
               </button>
               <button
                 type="button"
-                onClick={() => setCropBoxSize((prev) => Math.min(260, prev + 20))}
+                onClick={() =>
+                  setCropBoxSize((prev) => Math.min(260, prev + 20))
+                }
                 className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white"
                 title="Expand Crop Box"
               >
@@ -409,5 +432,5 @@ export default function LogoCropModal({
         </div>
       </div>
     </div>
-  )
+  );
 }

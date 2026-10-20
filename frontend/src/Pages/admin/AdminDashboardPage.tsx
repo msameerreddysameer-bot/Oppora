@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import InfiniteScroll from 'react-infinite-scroll-component'
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import InfiniteScroll from "react-infinite-scroll-component";
 import {
   AlertCircle,
   AlertTriangle,
@@ -23,175 +23,188 @@ import {
   Trophy,
   UploadCloud,
   X,
-} from 'lucide-react'
-import AdminLayout from '@/components/admin/AdminLayout'
-import OrganizationLogo from '@/components/shared/OrganizationLogo'
-import { type IOpportunity, type PublicationStatus } from '@/demo/studentDemoData'
+} from "lucide-react";
+import AdminLayout from "@/components/admin/AdminLayout";
+import OrganizationLogo from "@/components/shared/OrganizationLogo";
+import { TableSkeleton } from "@/components/shared/Skeletons";
+import {
+  type IOpportunity,
+  type PublicationStatus,
+} from "@/types/studentTypesData";
 import {
   apiDeleteOpportunity,
   apiEditOpportunity,
   apiGetOpportunityStats,
   apiSearchOpportunities,
   type IOpportunityStatsData,
-} from '@/services/opportunityService'
+} from "@/services/opportunityService";
 
 export default function AdminDashboardPage() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   // =========================================================================
   // STATE MANAGEMENT: STATS & RECENTLY ADDED OPPORTUNITIES
   // =========================================================================
-  const [stats, setStats] = useState<IOpportunityStatsData | null>(null)
+  const [stats, setStats] = useState<IOpportunityStatsData | null>(null);
   const [opportunities, setOpportunities] = useState<IOpportunity[]>(() => {
     try {
-      const saved = localStorage.getItem('admin_managed_opportunities')
+      const saved = localStorage.getItem("admin_managed_opportunities");
       if (saved) {
-        const parsed = JSON.parse(saved)
+        const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           return parsed.filter(
-            (o) => !['opp-101', 'opp-102', 'opp-103', 'opp-104'].includes(o._id)
-          )
+            (o) => !["opp-101", "opp-102", "opp-103", "opp-104"].includes(o._id)
+          );
         }
       }
     } catch {
       // fallback
     }
-    return []
-  })
+    return [];
+  });
 
   // Pagination & Infinite Scroll States for Recently Added Table (Limit: 50)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [totalOpportunitiesCount, setTotalOpportunitiesCount] = useState(0)
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [totalOpportunitiesCount, setTotalOpportunitiesCount] = useState(0);
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
   // Modal & Feedback States
-  const [opportunityToPublish, setOpportunityToPublish] = useState<IOpportunity | null>(null)
-  const [isPublishing, setIsPublishing] = useState(false)
-  const [opportunityToDelete, setOpportunityToDelete] = useState<IOpportunity | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [opportunityToPublish, setOpportunityToPublish] =
+    useState<IOpportunity | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [opportunityToDelete, setOpportunityToDelete] =
+    useState<IOpportunity | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [feedbackToast, setFeedbackToast] = useState<{
-    type: 'success' | 'error'
-    title: string
-    message: string
-  } | null>(null)
+    type: "success" | "error";
+    title: string;
+    message: string;
+  } | null>(null);
 
   // Auto-dismiss toast notification after 4 seconds
   useEffect(() => {
-    if (!feedbackToast) return
+    if (!feedbackToast) return;
     const timer = setTimeout(() => {
-      setFeedbackToast(null)
-    }, 4000)
-    return () => clearTimeout(timer)
-  }, [feedbackToast])
+      setFeedbackToast(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [feedbackToast]);
 
   const saveToStorage = (updated: IOpportunity[]) => {
-    setOpportunities(updated)
-    localStorage.setItem('admin_managed_opportunities', JSON.stringify(updated))
-  }
+    setOpportunities(updated);
+    localStorage.setItem(
+      "admin_managed_opportunities",
+      JSON.stringify(updated)
+    );
+  };
 
   // =========================================================================
   // [BACKEND API: FETCH DASHBOARD STATS & RECENT OPPORTUNITIES (PAGE 1, LIMIT: 50)]
   // =========================================================================
   const fetchDashboardData = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
 
     // 1. Fetch exact aggregate stats from /opportunity/stats
     try {
-      const statsRes = await apiGetOpportunityStats()
+      const statsRes = await apiGetOpportunityStats();
       const payload: IOpportunityStatsData | undefined =
         statsRes?.data?.totalOpportunities !== undefined
           ? statsRes.data
           : statsRes?.totalOpportunities !== undefined
-          ? (statsRes as any)
-          : statsRes?.data
+            ? (statsRes as any)
+            : statsRes?.data;
 
       if (payload) {
-        setStats(payload)
+        setStats(payload);
       }
-    } catch (err) {
-      console.info('[Admin Dashboard] Error fetching opportunity stats:', err)
+    } catch {
+      // Use fallback defaults on error
     }
 
     // 2. Fetch recently added opportunities for the table (Page 1, Limit 50)
     try {
-      const res = await apiSearchOpportunities({ page: 1, limit: 50 })
+      const res = await apiSearchOpportunities({ page: 1, limit: 50 });
       const liveList =
-        res?.data?.opportunities || res?.opportunities || res?.data || []
+        res?.data?.opportunities || res?.opportunities || res?.data || [];
       const total =
         res?.data?.totalResults ??
         res?.data?.total ??
         res?.totalResults ??
         res?.total ??
-        (Array.isArray(liveList) ? liveList.length : 0)
+        (Array.isArray(liveList) ? liveList.length : 0);
 
       if (Array.isArray(liveList) && liveList.length > 0) {
-        setOpportunities(liveList)
-        setTotalOpportunitiesCount(total)
-        setPage(1)
-        setHasMore(liveList.length < total)
-        localStorage.setItem('admin_managed_opportunities', JSON.stringify(liveList))
+        setOpportunities(liveList);
+        setTotalOpportunitiesCount(total);
+        setPage(1);
+        setHasMore(liveList.length < total);
+        localStorage.setItem(
+          "admin_managed_opportunities",
+          JSON.stringify(liveList)
+        );
       } else {
-        setHasMore(false)
+        setHasMore(false);
       }
-    } catch (err) {
-      console.info(
-        '[Admin Dashboard] Backend API search unreachable, using cached opportunities:',
-        err
-      )
+    } catch {
+      // Backend unreachable, using cached opportunities
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // =========================================================================
   // [INFINITE SCROLL: FETCH MORE RECENT OPPORTUNITIES (NEXT PAGE, LIMIT: 50)]
   // =========================================================================
   const fetchMoreLiveOpportunities = async () => {
-    if (isLoadingMore || !hasMore) return
-    const nextPage = page + 1
-    setIsLoadingMore(true)
+    if (isLoadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setIsLoadingMore(true);
 
     try {
-      console.log(`[Admin Dashboard] Fetching page ${nextPage} of opportunities (limit 50)...`)
-      const res = await apiSearchOpportunities({ page: nextPage, limit: 50 })
+      const res = await apiSearchOpportunities({ page: nextPage, limit: 50 });
       const backendList =
-        res?.data?.opportunities || res?.opportunities || res?.data || []
+        res?.data?.opportunities || res?.opportunities || res?.data || [];
       const total =
         res?.data?.totalResults ??
         res?.data?.total ??
         res?.totalResults ??
         res?.total ??
-        totalOpportunitiesCount
+        totalOpportunitiesCount;
 
       if (Array.isArray(backendList) && backendList.length > 0) {
-        let reachedEnd = false
+        let reachedEnd = false;
         setOpportunities((prev) => {
-          const existingIds = new Set(prev.map((o) => o._id))
-          const newItems = backendList.filter((o: any) => !existingIds.has(o._id))
-          const combined = [...prev, ...newItems]
-          if (combined.length >= total || newItems.length === 0 || backendList.length < 50) {
-            reachedEnd = true
+          const existingIds = new Set(prev.map((o) => o._id));
+          const newItems = backendList.filter(
+            (o: any) => !existingIds.has(o._id)
+          );
+          const combined = [...prev, ...newItems];
+          if (
+            combined.length >= total ||
+            newItems.length === 0 ||
+            backendList.length < 50
+          ) {
+            reachedEnd = true;
           }
-          return combined
-        })
-        setPage(nextPage)
-        setTotalOpportunitiesCount(total)
+          return combined;
+        });
+        setPage(nextPage);
+        setTotalOpportunitiesCount(total);
         if (reachedEnd) {
-          setHasMore(false)
+          setHasMore(false);
         }
       } else {
-        setHasMore(false)
+        setHasMore(false);
       }
-    } catch (err) {
-      console.warn('[Admin Dashboard] Error loading more opportunities:', err)
-      setHasMore(false)
+    } catch {
+      setHasMore(false);
     } finally {
-      setIsLoadingMore(false)
+      setIsLoadingMore(false);
     }
-  }
+  };
 
   // =========================================================================
   // [REAL-TIME AUTO-UPDATE VIA USE EFFECT]
@@ -201,44 +214,46 @@ export default function AdminDashboardPage() {
   // 4. Reacts to browser window focus & tab visibility
   // =========================================================================
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
 
     // Initial load
-    fetchDashboardData()
+    fetchDashboardData();
 
     // 1. Background Polling Interval: 20 seconds
     const intervalId = setInterval(() => {
       if (isMounted) {
-        fetchDashboardData()
+        fetchDashboardData();
       }
-    }, 20000)
+    }, 20000);
 
     // 2. Custom Window Event: Dispatched whenever an opportunity is created/edited/deleted
     const handleOpportunityChange = () => {
       if (isMounted) {
-        console.log('[Admin Dashboard] Opportunity change detected. Auto-refreshing metrics...')
-        fetchDashboardData()
+        fetchDashboardData();
       }
-    }
-    window.addEventListener('opportunity-updated', handleOpportunityChange)
-    window.addEventListener('storage', handleOpportunityChange)
+    };
+    window.addEventListener("opportunity-updated", handleOpportunityChange);
+    window.addEventListener("storage", handleOpportunityChange);
 
     // 3. Window Focus: Updates immediately when returning to the tab
     const handleWindowFocus = () => {
       if (isMounted) {
-        fetchDashboardData()
+        fetchDashboardData();
       }
-    }
-    window.addEventListener('focus', handleWindowFocus)
+    };
+    window.addEventListener("focus", handleWindowFocus);
 
     return () => {
-      isMounted = false
-      clearInterval(intervalId)
-      window.removeEventListener('opportunity-updated', handleOpportunityChange)
-      window.removeEventListener('storage', handleOpportunityChange)
-      window.removeEventListener('focus', handleWindowFocus)
-    }
-  }, [])
+      isMounted = false;
+      clearInterval(intervalId);
+      window.removeEventListener(
+        "opportunity-updated",
+        handleOpportunityChange
+      );
+      window.removeEventListener("storage", handleOpportunityChange);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, []);
 
   // =========================================================================
   // [CONFIRM & PUBLISH DRAFT OPPORTUNITY]
@@ -246,96 +261,94 @@ export default function AdminDashboardPage() {
   // Once published, cannot again run back to draft!
   // =========================================================================
   const handleConfirmPublish = async () => {
-    if (!opportunityToPublish) return
-    const targetId = opportunityToPublish._id
-    const targetTitle = opportunityToPublish.title
+    if (!opportunityToPublish) return;
+    const targetId = opportunityToPublish._id;
+    const targetTitle = opportunityToPublish.title;
 
-    setIsPublishing(true)
+    setIsPublishing(true);
 
     try {
       // 1. Call Backend API to update status to active and publicationStatus to published
       await apiEditOpportunity(targetId, {
-        status: 'active',
-        publicationStatus: 'published',
-      })
+        status: "active",
+        publicationStatus: "published",
+      });
 
       // 2. Optimistic & Local Storage update
       const updated = opportunities.map((o) => {
         if (o._id === targetId) {
           return {
             ...o,
-            publicationStatus: 'published' as PublicationStatus,
-            status: 'active',
+            publicationStatus: "published" as PublicationStatus,
+            status: "active",
             updatedAt: new Date().toISOString(),
-          } as IOpportunity
+          } as IOpportunity;
         }
-        return o
-      })
-      saveToStorage(updated)
+        return o;
+      });
+      saveToStorage(updated);
 
       // 3. Display success alert message in the frontend
       setFeedbackToast({
-        type: 'success',
-        title: 'Opportunity Published Successfully!',
+        type: "success",
+        title: "Opportunity Published Successfully!",
         message: `"${targetTitle}" is now live and visible to students in the directory.`,
-      })
+      });
 
       // 4. Close the confirmation modal
-      setOpportunityToPublish(null)
+      setOpportunityToPublish(null);
 
       // 5. Trigger background stats update immediately
-      fetchDashboardData()
+      fetchDashboardData();
     } catch (err: any) {
-      console.error('[API Error] Could not publish opportunity:', err)
       setFeedbackToast({
-        type: 'error',
-        title: 'Publish Failed',
+        type: "error",
+        title: "Publish Failed",
         message:
           err?.response?.data?.message ||
           err?.message ||
-          'Failed to publish opportunity. Please check backend connection and try again.',
-      })
+          "Failed to publish opportunity. Please check backend connection and try again.",
+      });
     } finally {
-      setIsPublishing(false)
+      setIsPublishing(false);
     }
-  }
+  };
 
   // =========================================================================
   // [DELETE OPPORTUNITY]
   // =========================================================================
   const handleConfirmDelete = async () => {
-    if (!opportunityToDelete) return
-    const targetId = opportunityToDelete._id
-    const targetTitle = opportunityToDelete.title
+    if (!opportunityToDelete) return;
+    const targetId = opportunityToDelete._id;
+    const targetTitle = opportunityToDelete.title;
 
-    setIsDeleting(true)
+    setIsDeleting(true);
 
     try {
-      await apiDeleteOpportunity(targetId)
-      const updated = opportunities.filter((o) => o._id !== targetId)
-      saveToStorage(updated)
+      await apiDeleteOpportunity(targetId);
+      const updated = opportunities.filter((o) => o._id !== targetId);
+      saveToStorage(updated);
 
       setFeedbackToast({
-        type: 'success',
-        title: 'Opportunity Deleted',
+        type: "success",
+        title: "Opportunity Deleted",
         message: `"${targetTitle}" has been permanently removed.`,
-      })
-      setOpportunityToDelete(null)
-      fetchDashboardData()
+      });
+      setOpportunityToDelete(null);
+      fetchDashboardData();
     } catch (err: any) {
-      console.warn('[API Warning] Could not delete opportunity on backend:', err)
       setFeedbackToast({
-        type: 'error',
-        title: 'Delete Failed',
+        type: "error",
+        title: "Delete Failed",
         message:
           err?.response?.data?.message ||
           err?.message ||
-          'Failed to delete opportunity.',
-      })
+          "Failed to delete opportunity.",
+      });
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
-  }
+  };
 
   // =========================================================================
   // [METRICS COMPUTATION: EXACT STATS FROM API WITH RESILIENT FALLBACK]
@@ -343,187 +356,198 @@ export default function AdminDashboardPage() {
   const getCategoryMetrics = (catKey: string) => {
     // 1. Priority: Exact aggregate metrics from backend GET /opportunity/stats
     if (stats?.categories && Array.isArray(stats.categories)) {
-      const cleaned = catKey.toLowerCase().replace(/[-_\s]/g, '')
+      const cleaned = catKey.toLowerCase().replace(/[-_\s]/g, "");
       const match = stats.categories.find((c) => {
-        const dbName = (c.category || '').toLowerCase().replace(/[-_\s]/g, '')
-        return dbName === cleaned || dbName.includes(cleaned) || cleaned.includes(dbName)
-      })
+        const dbName = (c.category || "").toLowerCase().replace(/[-_\s]/g, "");
+        return (
+          dbName === cleaned ||
+          dbName.includes(cleaned) ||
+          cleaned.includes(dbName)
+        );
+      });
 
       if (match) {
-        const total = match.total ?? 0
-        const live = match.live ?? 0
-        const active = match.active ?? 0
-        const expired = Math.max(0, total - live)
-        return { total, live, active, expired }
+        const total = match.total ?? 0;
+        const live = match.live ?? 0;
+        const active = match.active ?? 0;
+        const expired = Math.max(0, total - live);
+        return { total, live, active, expired };
       }
     }
 
     // 2. Client-side fallback: Computed across opportunities list
     const filtered = opportunities.filter((o) =>
-      (o.category || '').toLowerCase().includes(catKey.toLowerCase())
-    )
-    const total = filtered.length
+      (o.category || "").toLowerCase().includes(catKey.toLowerCase())
+    );
+    const total = filtered.length;
     const live = filtered.filter(
       (o) =>
-        (o.publicationStatus === 'published' || o.status === 'active') &&
-        o.publicationStatus !== 'draft'
-    ).length
-    const expired = Math.max(0, total - live)
-    return { total, live, active: live, expired }
-  }
+        (o.publicationStatus === "published" || o.status === "active") &&
+        o.publicationStatus !== "draft"
+    ).length;
+    const expired = Math.max(0, total - live);
+    return { total, live, active: live, expired };
+  };
 
   // Aggregate Top Counts
-  const overallTotal = stats?.totalOpportunities ?? (totalOpportunitiesCount > 0 ? totalOpportunitiesCount : opportunities.length)
+  const overallTotal =
+    stats?.totalOpportunities ??
+    (totalOpportunitiesCount > 0
+      ? totalOpportunitiesCount
+      : opportunities.length);
   const overallLive =
     stats?.totalLive ??
     opportunities.filter(
       (o) =>
-        (o.publicationStatus === 'published' || o.status === 'active') &&
-        o.publicationStatus !== 'draft'
-    ).length
-  const overallExpired = stats?.totalExpired ?? Math.max(0, overallTotal - overallLive)
-  const overallActive = stats?.totalActive ?? overallLive
+        (o.publicationStatus === "published" || o.status === "active") &&
+        o.publicationStatus !== "draft"
+    ).length;
+  const overallExpired =
+    stats?.totalExpired ?? Math.max(0, overallTotal - overallLive);
+  const overallActive = stats?.totalActive ?? overallLive;
 
   // Category-specific metrics
-  const scholarshipMetrics = getCategoryMetrics('scholarship')
-  const fellowshipMetrics = getCategoryMetrics('fellowship')
-  const internshipMetrics = getCategoryMetrics('internship') // Matches 'intership' & 'internship'
-  const hackathonMetrics = getCategoryMetrics('hackathon')
-  const openSourceMetrics = getCategoryMetrics('open-source')
-  const researchMetrics = getCategoryMetrics('research')
-  const competitionMetrics = getCategoryMetrics('competition')
-  const workshopMetrics = getCategoryMetrics('workshop')
+  const scholarshipMetrics = getCategoryMetrics("scholarship");
+  const fellowshipMetrics = getCategoryMetrics("fellowship");
+  const internshipMetrics = getCategoryMetrics("internship"); // Matches 'intership' & 'internship'
+  const hackathonMetrics = getCategoryMetrics("hackathon");
+  const openSourceMetrics = getCategoryMetrics("open-source");
+  const researchMetrics = getCategoryMetrics("research");
+  const competitionMetrics = getCategoryMetrics("competition");
+  const workshopMetrics = getCategoryMetrics("workshop");
 
   // Top Summary & Category Cards Configuration
   const summaryCards = [
     {
-      id: 'total',
-      label: 'Total opportunities',
+      id: "total",
+      label: "Total opportunities",
       count: overallTotal,
       live: overallLive,
       expired: overallExpired,
       active: overallActive,
-      sublabel: 'All cataloged listings',
+      sublabel: "All cataloged listings",
       icon: Briefcase,
-      color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+      color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
     },
     {
-      id: 'scholarships',
-      label: 'Scholarships',
+      id: "scholarships",
+      label: "Scholarships",
       count: scholarshipMetrics.total,
       live: scholarshipMetrics.live,
       expired: scholarshipMetrics.expired,
       active: scholarshipMetrics.active,
-      sublabel: 'Funding & grant programs',
+      sublabel: "Funding & grant programs",
       icon: GraduationCap,
-      color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+      color: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
       highlight: true, // Special styling for user's requested focus card
     },
     {
-      id: 'fellowships',
-      label: 'Fellowships',
+      id: "fellowships",
+      label: "Fellowships",
       count: fellowshipMetrics.total,
       live: fellowshipMetrics.live,
       expired: fellowshipMetrics.expired,
       active: fellowshipMetrics.active,
-      sublabel: 'Academic & leadership',
+      sublabel: "Academic & leadership",
       icon: Sparkles,
-      color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+      color: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
     },
     {
-      id: 'internships',
-      label: 'Internships',
+      id: "internships",
+      label: "Internships",
       count: internshipMetrics.total,
       live: internshipMetrics.live,
       expired: internshipMetrics.expired,
       active: internshipMetrics.active,
-      sublabel: 'Industry & work programs',
+      sublabel: "Industry & work programs",
       icon: Building2,
-      color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400',
+      color: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
     },
     {
-      id: 'hackathons',
-      label: 'Hackathons',
+      id: "hackathons",
+      label: "Hackathons",
       count: hackathonMetrics.total,
       live: hackathonMetrics.live,
       expired: hackathonMetrics.expired,
       active: hackathonMetrics.active,
-      sublabel: 'Coding & build events',
+      sublabel: "Coding & build events",
       icon: Terminal,
-      color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+      color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
     },
     {
-      id: 'opensource',
-      label: 'Open source',
+      id: "opensource",
+      label: "Open source",
       count: openSourceMetrics.total,
       live: openSourceMetrics.live,
       expired: openSourceMetrics.expired,
       active: openSourceMetrics.active,
-      sublabel: 'Contributor programs',
+      sublabel: "Contributor programs",
       icon: GitBranch,
-      color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+      color: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
     },
     {
-      id: 'research',
-      label: 'Research',
+      id: "research",
+      label: "Research",
       count: researchMetrics.total,
       live: researchMetrics.live,
       expired: researchMetrics.expired,
       active: researchMetrics.active,
-      sublabel: 'Labs & research grants',
+      sublabel: "Labs & research grants",
       icon: FlaskConical,
-      color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+      color: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
     },
     {
-      id: 'competitions',
-      label: 'Competitions',
+      id: "competitions",
+      label: "Competitions",
       count: competitionMetrics.total,
       live: competitionMetrics.live,
       expired: competitionMetrics.expired,
       active: competitionMetrics.active,
-      sublabel: 'Contests & challenges',
+      sublabel: "Contests & challenges",
       icon: Trophy,
-      color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+      color: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
     },
     {
-      id: 'live',
-      label: 'Live / Open',
+      id: "live",
+      label: "Live / Open",
       count: overallLive,
       live: overallLive,
       expired: overallExpired,
       active: overallActive,
-      sublabel: 'Active & published',
+      sublabel: "Active & published",
       icon: CheckCircle2,
-      color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+      color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     },
     {
-      id: 'workshops',
-      label: 'Workshops',
+      id: "workshops",
+      label: "Workshops",
       count: workshopMetrics.total,
       live: workshopMetrics.live,
       expired: workshopMetrics.expired,
       active: workshopMetrics.active,
-      sublabel: 'Hands-on learning & bootcamps',
+      sublabel: "Hands-on learning & bootcamps",
       icon: Layers,
-      color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400',
+      color: "bg-slate-500/10 text-slate-600 dark:text-slate-400",
     },
-  ]
+  ];
 
-     const convertIsoDateToNormalDate = (IsoString?: string) => {
-        if (!IsoString) return '—'
-        try {
-          const date = new Date(IsoString)
-          if (isNaN(date.getTime())) return IsoString
-          return new Intl.DateTimeFormat('en-IN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            timeZone: 'Asia/Kolkata',
-          }).format(date).replace(/\//g, '-')
-        } catch {
-          return IsoString
-        }
-     }
+  const convertIsoDateToNormalDate = (IsoString?: string) => {
+    if (!IsoString) return "—";
+    try {
+      const date = new Date(IsoString);
+      if (isNaN(date.getTime())) return IsoString;
+      return new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        timeZone: "Asia/Kolkata",
+      })
+        .format(date)
+        .replace(/\//g, "-");
+    } catch {
+      return IsoString;
+    }
+  };
 
   return (
     <AdminLayout activeTab="dashboard">
@@ -541,7 +565,8 @@ export default function AdminDashboardPage() {
               </span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Opportunity database overview & real-time metrics (automatically updates when listings are added)
+              Opportunity database overview & real-time metrics (automatically
+              updates when listings are added)
             </p>
           </div>
 
@@ -571,14 +596,14 @@ export default function AdminDashboardPage() {
         {/* Unified Top Summary & Category Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4">
           {summaryCards.map((card) => {
-            const Icon = card.icon
+            const Icon = card.icon;
             return (
               <div
                 key={card.id}
                 className={`group relative flex flex-col justify-between rounded-2xl border transition-all p-4 sm:p-5 shadow-sm hover:shadow-md ${
                   card.highlight
-                    ? 'border-indigo-500/40 bg-linear-to-b from-indigo-950/20 to-slate-900/90 dark:bg-linear-to-b dark:from-indigo-950/40 dark:to-slate-900 ring-1 ring-indigo-500/20'
-                    : 'border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 hover:border-slate-700/80'
+                    ? "border-indigo-500/40 bg-linear-to-b from-indigo-950/20 to-slate-900/90 dark:bg-linear-to-b dark:from-indigo-950/40 dark:to-slate-900 ring-1 ring-indigo-500/20"
+                    : "border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 hover:border-slate-700/80"
                 }`}
               >
                 <div>
@@ -632,7 +657,7 @@ export default function AdminDashboardPage() {
                   )}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
 
@@ -649,7 +674,7 @@ export default function AdminDashboardPage() {
                 </span> */}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Latest opportunities 
+                Latest opportunities
               </p>
             </div>
             {opportunities.length > 0 && (
@@ -664,11 +689,8 @@ export default function AdminDashboardPage() {
           </div>
 
           {isLoading && opportunities.length === 0 ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-900/90 px-4 py-2 text-xs font-medium text-cyan-300 shadow">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
-                <span>Loading opportunities...</span>
-              </div>
+            <div className="p-4">
+              <TableSkeleton rows={5} cols={5} />
             </div>
           ) : opportunities.length === 0 ? (
             /* Clean Empty State when no real data exists */
@@ -681,7 +703,8 @@ export default function AdminDashboardPage() {
                   No opportunities cataloged yet
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Get started by creating your first opportunity or sync with your backend database.
+                  Get started by creating your first opportunity or sync with
+                  your backend database.
                 </p>
               </div>
               <Link
@@ -709,7 +732,11 @@ export default function AdminDashboardPage() {
               endMessage={
                 opportunities.length > 0 ? (
                   <div className="py-6 text-center text-xs text-slate-500">
-                    ✨ All {totalOpportunitiesCount > 0 ? totalOpportunitiesCount : opportunities.length} recently added opportunities loaded
+                    ✨ All{" "}
+                    {totalOpportunitiesCount > 0
+                      ? totalOpportunitiesCount
+                      : opportunities.length}{" "}
+                    recently added opportunities loaded
                   </div>
                 ) : null
               }
@@ -723,14 +750,17 @@ export default function AdminDashboardPage() {
                       <th className="py-3.5 px-3 font-semibold">Category</th>
                       <th className="py-3.5 px-3 font-semibold">Status</th>
                       <th className="py-3.5 px-3 font-semibold">Deadline</th>
-                      <th className="py-3.5 px-4 text-right font-semibold">Actions</th>
+                      <th className="py-3.5 px-4 text-right font-semibold">
+                        Actions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                     {opportunities.map((opp) => {
                       const isPublished =
-                        opp.publicationStatus === 'published' ||
-                        (opp.status === 'active' && opp.publicationStatus !== 'draft')
+                        opp.publicationStatus === "published" ||
+                        (opp.status === "active" &&
+                          opp.publicationStatus !== "draft");
 
                       return (
                         <tr
@@ -783,7 +813,9 @@ export default function AdminDashboardPage() {
                           <td className="py-3.5 px-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
                             <div className="flex items-center gap-1.5">
                               <Calendar size={13} className="text-slate-400" />
-                              <span>{convertIsoDateToNormalDate(opp.deadline)}</span>
+                              <span>
+                                {convertIsoDateToNormalDate(opp.deadline)}
+                              </span>
                             </div>
                           </td>
 
@@ -807,7 +839,9 @@ export default function AdminDashboardPage() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  navigate(`/admin/opportunities/edit/${opp._id}`)
+                                  navigate(
+                                    `/admin/opportunities/edit/${opp._id}`
+                                  )
                                 }
                                 className="rounded-lg border border-slate-700/60 bg-slate-800/80 p-2 text-slate-300 hover:border-slate-600 hover:bg-slate-700 hover:text-white transition-colors"
                                 title="Edit opportunity"
@@ -827,7 +861,7 @@ export default function AdminDashboardPage() {
                             </div>
                           </td>
                         </tr>
-                      )
+                      );
                     })}
                   </tbody>
                 </table>
@@ -837,8 +871,9 @@ export default function AdminDashboardPage() {
               <div className="md:hidden space-y-3.5">
                 {opportunities.map((opp) => {
                   const isPublished =
-                    opp.publicationStatus === 'published' ||
-                    (opp.status === 'active' && opp.publicationStatus !== 'draft')
+                    opp.publicationStatus === "published" ||
+                    (opp.status === "active" &&
+                      opp.publicationStatus !== "draft");
 
                   return (
                     <div
@@ -880,7 +915,9 @@ export default function AdminDashboardPage() {
                         </span>
                         <div className="flex items-center gap-1.5 text-slate-400">
                           <Calendar size={12} />
-                          <span>{convertIsoDateToNormalDate(opp.deadline)}</span>
+                          <span>
+                            {convertIsoDateToNormalDate(opp.deadline)}
+                          </span>
                         </div>
                       </div>
 
@@ -898,7 +935,9 @@ export default function AdminDashboardPage() {
                         )}
                         <button
                           type="button"
-                          onClick={() => navigate(`/admin/opportunities/edit/${opp._id}`)}
+                          onClick={() =>
+                            navigate(`/admin/opportunities/edit/${opp._id}`)
+                          }
                           className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 py-2 text-xs font-semibold text-slate-200 transition-all"
                         >
                           <Edit2 size={13} />
@@ -914,7 +953,7 @@ export default function AdminDashboardPage() {
                         </button>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             </InfiniteScroll>
@@ -937,7 +976,10 @@ export default function AdminDashboardPage() {
                     Publish Opportunity?
                   </h3>
                   <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                    Do you want to publish it? This will immediately make it active and visible to all students in the opportunity directory. Once published, it cannot be reverted back to draft.
+                    Do you want to publish it? This will immediately make it
+                    active and visible to all students in the opportunity
+                    directory. Once published, it cannot be reverted back to
+                    draft.
                   </p>
                 </div>
               </div>
@@ -956,7 +998,9 @@ export default function AdminDashboardPage() {
                     {opportunityToPublish.title}
                   </p>
                   <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                    <span className="truncate">{opportunityToPublish.organization}</span>
+                    <span className="truncate">
+                      {opportunityToPublish.organization}
+                    </span>
                     <span>•</span>
                     <span className="capitalize text-cyan-400 font-medium">
                       {opportunityToPublish.category}
@@ -1013,7 +1057,8 @@ export default function AdminDashboardPage() {
                     Delete Opportunity?
                   </h3>
                   <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                    Are you sure you want to delete this listing? This action is permanent and cannot be undone.
+                    Are you sure you want to delete this listing? This action is
+                    permanent and cannot be undone.
                   </p>
                 </div>
               </div>
@@ -1031,7 +1076,9 @@ export default function AdminDashboardPage() {
                     {opportunityToDelete.title}
                   </p>
                   <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                    <span className="truncate">{opportunityToDelete.organization}</span>
+                    <span className="truncate">
+                      {opportunityToDelete.organization}
+                    </span>
                     <span>•</span>
                     <span className="capitalize text-rose-400 font-medium">
                       {opportunityToDelete.category}
@@ -1079,19 +1126,19 @@ export default function AdminDashboardPage() {
           <div className="fixed top-5 right-5 z-50 max-w-md w-full animate-in slide-in-from-top-4 fade-in duration-200">
             <div
               className={`rounded-2xl border p-4 shadow-2xl backdrop-blur-md flex items-start gap-3.5 ${
-                feedbackToast.type === 'success'
-                  ? 'border-emerald-500/30 bg-slate-900/95 text-white shadow-emerald-950/40 ring-1 ring-emerald-500/20'
-                  : 'border-rose-500/30 bg-slate-900/95 text-white shadow-rose-950/40 ring-1 ring-rose-500/20'
+                feedbackToast.type === "success"
+                  ? "border-emerald-500/30 bg-slate-900/95 text-white shadow-emerald-950/40 ring-1 ring-emerald-500/20"
+                  : "border-rose-500/30 bg-slate-900/95 text-white shadow-rose-950/40 ring-1 ring-rose-500/20"
               }`}
             >
               <div
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
-                  feedbackToast.type === 'success'
-                    ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'bg-rose-500/20 text-rose-400'
+                  feedbackToast.type === "success"
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : "bg-rose-500/20 text-rose-400"
                 }`}
               >
-                {feedbackToast.type === 'success' ? (
+                {feedbackToast.type === "success" ? (
                   <CheckCircle2 size={18} />
                 ) : (
                   <AlertCircle size={18} />
@@ -1117,5 +1164,5 @@ export default function AdminDashboardPage() {
         )}
       </div>
     </AdminLayout>
-  )
+  );
 }

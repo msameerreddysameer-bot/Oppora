@@ -10,22 +10,35 @@ import {
   getOpportunityStats,
   searchAndFilterOpportunity,
 } from "./opportunity.controller.ts";
-import { upload } from "./opportunity.middleware.ts"
+import { upload } from "./opportunity.middleware.ts";
 
+const router = Router();
 
-
-
-const router = Router()
-
-router.route("/").post(verifyJWT,isAdmin,upload.single('organizationLogo'),createOpportunity);
-router.route("/stats").get(verifyJWT,isAdmin,getOpportunityStats);
-router.route("/search").get(verifyJWT,searchAndFilterOpportunity);
-router.route("/:id").patch(verifyJWT,isAdmin,upload.single('organizationLogo'),editOpportunity);
-router.route("/:id").delete(verifyJWT,isAdmin,deleteOpportunity);
+router
+  .route("/")
+  .post(
+    verifyJWT,
+    isAdmin,
+    upload.single("organizationLogo"),
+    createOpportunity
+  );
+router.route("/stats").get(verifyJWT, isAdmin, getOpportunityStats);
+router.route("/search").get(verifyJWT, searchAndFilterOpportunity);
+router
+  .route("/:id")
+  .patch(
+    verifyJWT,
+    isAdmin,
+    upload.single("organizationLogo"),
+    editOpportunity
+  );
+router.route("/:id").delete(verifyJWT, isAdmin, deleteOpportunity);
 
 //testing purpose only
 //router.route("/testSearch").get(searchAndFilterOpportunity);
-router.route("/status/:status").get(verifyJWT,isAdmin,getOpportunitiesBystatus);
-router.route("/:id").get(verifyJWT,getOpportunitiesById);
+router
+  .route("/status/:status")
+  .get(verifyJWT, isAdmin, getOpportunitiesBystatus);
+router.route("/:id").get(verifyJWT, getOpportunitiesById);
 
 export default router;

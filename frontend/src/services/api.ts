@@ -1,9 +1,34 @@
-import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios"
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
+  timeout: 15000, // 15-second timeout to prevent indefinite UI hangs
 });
+
+/**
+ * Diagnostic helpers for components to render tailored error states
+ */
+export const isNetworkError = (error: any): boolean => {
+  return (
+    error?.code === "ERR_NETWORK" ||
+    error?.code === "ECONNABORTED" ||
+    !error?.response
+  );
+};
+
+export const getErrorMessage = (
+  error: any,
+  fallback = "An unexpected error occurred."
+): string => {
+  if (error?.code === "ECONNABORTED") {
+    return "Request timed out. The server took too long to respond. Please try again.";
+  }
+  if (error?.code === "ERR_NETWORK" || !error?.response) {
+    return "Network connection issue. Please check your internet connection.";
+  }
+  return error?.response?.data?.message || error?.message || fallback;
+};
 
 // ============================================================================
 // PRODUCTION TOKEN REFRESH INTERCEPTOR WITH THUNDERING-HERD QUEUE PROTECTION
@@ -40,7 +65,9 @@ const processQueue = (error: any = null) => {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     // Ignore 401s from auth routes to avoid infinite recursion
     const requestUrl = originalRequest?.url || "";
@@ -49,7 +76,11 @@ api.interceptors.response.use(
       requestUrl.includes("/auth/refresh-token") ||
       requestUrl.includes("/auth/register");
 
-    if (error.response?.status === 401 && !originalRequest?._retry && !isAuthRoute) {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest?._retry &&
+      !isAuthRoute
+    ) {
       if (isRefreshing) {
         // Another request is already refreshing the token; queue this request to replay after refresh
         return new Promise((resolve, reject) => {
@@ -63,9 +94,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        console.log("[Auth Interceptor] 401 detected. Silently refreshing access token...");
         await api.post("/auth/refresh-token");
-        console.log("[Auth Interceptor] Token refreshed successfully. Replaying failed request(s)...");
 
         // Broadcast token refresh event for any active listeners
         if (typeof window !== "undefined") {
@@ -78,7 +107,9 @@ api.interceptors.response.use(
         // Replay original request
         return api(originalRequest);
       } catch (refreshError) {
-        console.warn("[Auth Interceptor] Refresh token expired or invalid. Logging out session.", refreshError);
+        console.warn(
+          "[Auth Interceptor] Session refresh failed or expired; clearing session."
+        );
         processQueue(refreshError);
 
         // If refresh token also failed, session has truly expired

@@ -11,18 +11,21 @@ const verificationEmailSchema = new Schema<IVerificationToken>(
     },
     token: {
       type: String,
-      requied: true,
-      unique:true,
-      index:true
+      required: true,
+      unique: true,
+      index: true,
     },
     expiresAt: {
       type: Date,
       required: true,
     },
   },
-  { 
-    timestamps: true    
-    }
+  {
+    timestamps: true,
+  }
 );
 
-export const VerificationEmail = model("VerificationEmail",verificationEmailSchema)
+export const VerificationEmail = model(
+  "VerificationEmail",
+  verificationEmailSchema
+);

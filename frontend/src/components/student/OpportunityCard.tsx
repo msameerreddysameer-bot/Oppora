@@ -5,11 +5,11 @@ import {
   ChevronRight,
   GraduationCap,
 } from "lucide-react";
-import type { IOpportunity } from "@/demo/studentDemoData";
+import type { IOpportunity } from "@/types/studentTypesData";
 import OrganizationLogo from "@/components/shared/OrganizationLogo";
 
 interface OpportunityCardProps {
-  opportunity: IOpportunity ;
+  opportunity: IOpportunity;
   saved?: boolean;
   onToggleSaved?: () => void;
   onViewDetails?: () => void;
@@ -21,27 +21,26 @@ export default function OpportunityCard({
   onToggleSaved,
   onViewDetails,
 }: OpportunityCardProps) {
+  const convertIsoDateToNormalDate = (IsoString?: string) => {
+    if (!IsoString || typeof IsoString !== "string" || !IsoString.trim()) {
+      return "Rolling";
+    }
+    try {
+      const date = new Date(IsoString);
+      if (isNaN(date.getTime())) return IsoString;
 
-    const convertIsoDateToNormalDate = (IsoString?: string) => {
-      if (!IsoString || typeof IsoString !== "string" || !IsoString.trim()) {
-        return "Rolling";
-      }
-      try {
-        const date = new Date(IsoString);
-        if (isNaN(date.getTime())) return IsoString;
-
-        return new Intl.DateTimeFormat("en-IN", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          timeZone: "Asia/Kolkata",
-        })
-          .format(date)
-          .replace(/\//g, "-");
-      } catch {
-        return IsoString || "Rolling";
-      }
-    };
+      return new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        timeZone: "Asia/Kolkata",
+      })
+        .format(date)
+        .replace(/\//g, "-");
+    } catch {
+      return IsoString || "Rolling";
+    }
+  };
   return (
     <article className="group flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg dark:border-white/10 dark:bg-slate-900">
       <div className="flex items-start gap-3">

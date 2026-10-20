@@ -1,19 +1,19 @@
-import { cn } from "cn"
-import { Button } from "@/components/ui/button"
+import { cn } from "cn";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import {
   AlertCircle,
   CheckCircle2,
@@ -23,106 +23,106 @@ import {
   Loader2,
   UserCheck,
   X,
-} from "lucide-react"
-import { useEffect, useState } from "react"
-import { Link, useLocation, useNavigate } from "react-router-dom"
-import { signup } from "@/services/authApi"
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { signup } from "@/services/authApi";
 
 interface ToastNotification {
-  type: "success" | "error" | "info" | "warning"
-  title: string
-  message: string
+  type: "success" | "error" | "info" | "warning";
+  title: string;
+  message: string;
 }
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Read pre-filled email from router state or search params
   const [email, setEmail] = useState<string>(() => {
-    const stateEmail = (location.state as { email?: string })?.email
-    if (stateEmail) return stateEmail
-    const params = new URLSearchParams(window.location.search)
-    return params.get("email") || ""
-  })
+    const stateEmail = (location.state as { email?: string })?.email;
+    if (stateEmail) return stateEmail;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("email") || "";
+  });
 
-  const [FullName, setFullName] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [FullName, setFullName] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Status-specific feedback states
   const [bannerAlert, setBannerAlert] = useState<{
-    type: "error" | "warning" | "info"
-    message: string
-  } | null>(null)
-  const [toast, setToast] = useState<ToastNotification | null>(null)
+    type: "error" | "warning" | "info";
+    message: string;
+  } | null>(null);
+  const [toast, setToast] = useState<ToastNotification | null>(null);
 
   // Auto-dismiss toast
   useEffect(() => {
-    if (!toast) return
+    if (!toast) return;
     const timer = setTimeout(() => {
-      setToast(null)
-    }, 4000)
-    return () => clearTimeout(timer)
-  }, [toast])
+      setToast(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Client-side validation
   const validateForm = (): boolean => {
-    const trimmedName = FullName.trim()
-    const trimmedEmail = email.trim()
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const trimmedName = FullName.trim();
+    const trimmedEmail = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!trimmedName || trimmedName.length < 2) {
       setBannerAlert({
         type: "error",
         message: "Please enter your full name (at least 2 characters).",
-      })
-      return false
+      });
+      return false;
     }
 
     if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
       setBannerAlert({
         type: "error",
         message: "Please enter a valid email address.",
-      })
-      return false
+      });
+      return false;
     }
 
     if (!password || password.length < 8) {
       setBannerAlert({
         type: "error",
         message: "Password must be at least 8 characters long.",
-      })
-      return false
+      });
+      return false;
     }
 
-    return true
-  }
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setBannerAlert(null)
+    e.preventDefault();
+    setBannerAlert(null);
 
-    if (!validateForm()) return
+    if (!validateForm()) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
 
     try {
       const response = await signup({
         FullName: FullName.trim(),
         email: email.trim(),
         password,
-      })
+      });
 
-      const status = response?.status
-      const responseMessage = response?.message || ""
+      const status = response?.status;
+      const responseMessage = response?.message || "";
 
       // Save email for verification screen
-      sessionStorage.setItem("verificationEmail", email.trim())
+      sessionStorage.setItem("verificationEmail", email.trim());
 
       // ----------------------------------------------------------------------
       // 1. 200 OK: User previously registered but never verified their email
@@ -130,7 +130,9 @@ export function SignupForm({
       // ----------------------------------------------------------------------
       if (
         status === 200 ||
-        responseMessage.toLowerCase().includes("already exists but was not verified")
+        responseMessage
+          .toLowerCase()
+          .includes("already exists but was not verified")
       ) {
         navigate("/verify-email", {
           state: {
@@ -139,8 +141,8 @@ export function SignupForm({
             infoMessage:
               "You already started registering previously. A fresh verification email has been sent to your inbox.",
           },
-        })
-        return
+        });
+        return;
       }
 
       // ----------------------------------------------------------------------
@@ -154,11 +156,11 @@ export function SignupForm({
           infoMessage:
             "Registration successful! We've sent a verification link to your email. Please verify before logging in.",
         },
-      })
+      });
     } catch (error: any) {
-      const status = error.response?.status
-      const responseData = error.response?.data
-      const backendMessage = responseData?.message || ""
+      const status = error.response?.status;
+      const responseData = error.response?.data;
+      const backendMessage = responseData?.message || "";
 
       // ----------------------------------------------------------------------
       // 3. 409 CONFLICT: User with this email already exists and is verified
@@ -167,18 +169,18 @@ export function SignupForm({
       if (status === 409) {
         const conflictText =
           backendMessage ||
-          "An account with this email already exists and is verified. Redirecting to login..."
+          "An account with this email already exists and is verified. Redirecting to login...";
 
         setBannerAlert({
           type: "warning",
           message: conflictText,
-        })
+        });
 
         setToast({
           type: "warning",
           title: "Account Already Exists",
           message: conflictText,
-        })
+        });
 
         // Redirect directly to /login with pre-filled email so user can sign in
         setTimeout(() => {
@@ -189,9 +191,9 @@ export function SignupForm({
                 backendMessage ||
                 "An account with this email is already registered and verified. Please log in with your password.",
             },
-          })
-        }, 1200)
-        return
+          });
+        }, 1200);
+        return;
       }
 
       // ----------------------------------------------------------------------
@@ -202,13 +204,13 @@ export function SignupForm({
           backendMessage ||
           (Array.isArray(responseData?.errors)
             ? responseData.errors.join(", ")
-            : "Please review the form for valid name, email, and password.")
+            : "Please review the form for valid name, email, and password.");
 
         setBannerAlert({
           type: "error",
           message: errorText,
-        })
-        return
+        });
+        return;
       }
 
       // ----------------------------------------------------------------------
@@ -216,22 +218,22 @@ export function SignupForm({
       // ----------------------------------------------------------------------
       const fallbackError =
         backendMessage ||
-        "Something went wrong on the server. Please try again later."
+        "Something went wrong on the server. Please try again later.";
 
       setBannerAlert({
         type: "error",
         message: fallbackError,
-      })
+      });
 
       setToast({
         type: "error",
         title: "Server Error",
         message: fallbackError,
-      })
+      });
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className={cn("flex w-full flex-col gap-6", className)} {...props}>
@@ -289,7 +291,7 @@ export function SignupForm({
             Create your account
           </CardTitle>
           <CardDescription className="text-slate-400">
-            Enter your details below to create your Opportunity Radar account
+            Enter your details below to create your Oppora account
           </CardDescription>
 
           {/* Inline Banner Alert */}
@@ -347,8 +349,8 @@ export function SignupForm({
                   required
                   value={FullName}
                   onChange={(event) => {
-                    setFullName(event.target.value)
-                    if (bannerAlert) setBannerAlert(null)
+                    setFullName(event.target.value);
+                    if (bannerAlert) setBannerAlert(null);
                   }}
                 />
               </Field>
@@ -368,8 +370,8 @@ export function SignupForm({
                   className="border-slate-700 bg-slate-900 text-white placeholder-slate-500 focus-visible:ring-cyan-500"
                   value={email}
                   onChange={(event) => {
-                    setEmail(event.target.value)
-                    if (bannerAlert) setBannerAlert(null)
+                    setEmail(event.target.value);
+                    if (bannerAlert) setBannerAlert(null);
                   }}
                 />
               </Field>
@@ -390,13 +392,15 @@ export function SignupForm({
                     autoComplete="new-password"
                     value={password}
                     onChange={(event) => {
-                      setPassword(event.target.value)
-                      if (bannerAlert) setBannerAlert(null)
+                      setPassword(event.target.value);
+                      if (bannerAlert) setBannerAlert(null);
                     }}
                   />
                   <button
                     type="button"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                     onClick={() => setShowPassword((visible) => !visible)}
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                   >
@@ -444,5 +448,5 @@ export function SignupForm({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

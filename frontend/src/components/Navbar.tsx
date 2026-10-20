@@ -1,30 +1,37 @@
-import { Link } from "react-router-dom"
-import { Compass } from "lucide-react"
-import { useAuth } from "./AuthContext"
+import { Link } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 
 export default function Navbar() {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user } = useAuth();
 
-  const rawUser: any = user
+  const rawUser: any = user;
   const effectiveRole = (
     rawUser?.role ||
     rawUser?.user?.role ||
-    localStorage.getItem('auth_user_role') ||
-    ''
-  ).toString().toLowerCase().trim()
+    localStorage.getItem("auth_user_role") ||
+    ""
+  )
+    .toString()
+    .toLowerCase()
+    .trim();
 
-  const dashboardPath = effectiveRole === 'admin' || effectiveRole === 'administrator'
-    ? '/admin'
-    : '/discover'
+  const dashboardPath =
+    effectiveRole === "admin" || effectiveRole === "administrator"
+      ? "/admin"
+      : "/discover";
 
   return (
-    <nav className='bg-slate-900 h-16 p-2 flex items-center justify-between sticky max-w-7xl mx-auto'>
-      <div className="flex items-center gap-2">
-        <div className="w-9 h-9 bg-blue-900 rounded-xl flex items-center justify-center">
-          <Compass className="text-white" />
-        </div> 
-        <span className="text-white font-semibold">Opportunity Radar</span>
-      </div>
+    <nav className="bg-slate-900 h-16 p-2 flex items-center justify-between sticky max-w-7xl mx-auto">
+      <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white p-1.5 shadow-md shadow-slate-950/40">
+          <img
+            src="/oppora-logo.svg"
+            alt="Oppora Logo"
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <span className="text-white font-semibold tracking-tight text-[15px]">Oppora</span>
+      </Link>
 
       <div className="flex items-center gap-2">
         {isAuthenticated ? (
@@ -52,5 +59,5 @@ export default function Navbar() {
         )}
       </div>
     </nav>
-  )
+  );
 }

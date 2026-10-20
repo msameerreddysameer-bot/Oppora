@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { } from "./opportunity.types.ts";
-
+import {} from "./opportunity.types.ts";
 
 const parseFormDataArray = (value: unknown) => {
   if (typeof value !== "string") {
@@ -23,46 +22,48 @@ export const OpportunityCategoryArray = [
   "research",
   "open-source",
   "workshop",
-] as const ;
+] as const;
 
 const OrganisationTypeArray = [
-        "government",
-        "private",
-        "university",
-        "ngo",
-        "start-up",
-        "non-profit",
-        "international-organisation",
-      ] as const ;
+  "government",
+  "private",
+  "university",
+  "ngo",
+  "start-up",
+  "non-profit",
+  "international-organisation",
+] as const;
 
 export const createOpportunitySchema = z.object({
   category: z.enum(OpportunityCategoryArray),
-  title:z.string().min(3),
-  description:z.string(),
-  organization:z.string(),
-  organizationType:z.enum(OrganisationTypeArray),
+  title: z.string().min(3),
+  description: z.string(),
+  organization: z.string(),
+  organizationType: z.enum(OrganisationTypeArray),
   // requiredDocuments:z.preprocess(
   //   parseFormDataArray,
   //   z.array(z.enum(documentsOptions)).default([])
   // ),
-  requiredDocuments:z.string().array().default([]),
-  startDate:z.coerce.date(),
-  deadline:z.coerce.date(),
-  officialSourceUrl:z.string(),
-  eligibility:z.array(z.string()),
-  eligibilitySummary:z.string(),
-  benefitsSummary:z.string(),
-  location:z.string(),
-  sourceStatus:z.enum(["live","expired"]),
-  
-  educationLevel:z.enum(['high-school' , 'diploma' , 'undergraduate' , 'postgraduate' , 'phd'] as const),
-    applicationUrl:z.string(),
-    benefits:z.array(z.string()),
-    gender:z.enum(['male','female','other','all'] as const)
+  requiredDocuments: z.string().array().default([]),
+  startDate: z.coerce.date(),
+  deadline: z.coerce.date(),
+  officialSourceUrl: z.string(),
+  eligibility: z.array(z.string()),
+  eligibilitySummary: z.string(),
+  benefitsSummary: z.string(),
+  location: z.string(),
+  sourceStatus: z.enum(["live", "expired"]),
 
-
-
-
+  educationLevel: z.enum([
+    "high-school",
+    "diploma",
+    "undergraduate",
+    "postgraduate",
+    "phd",
+  ] as const),
+  applicationUrl: z.string(),
+  benefits: z.array(z.string()),
+  gender: z.enum(["male", "female", "other", "all"] as const),
 });
 
 export const editOpportunitySchema = z.object({
@@ -80,54 +81,73 @@ export const editOpportunitySchema = z.object({
   benefitsSummary: z.string().optional(),
   location: z.string().optional(),
   sourceStatus: z.enum(["live", "expired"]).optional(),
-  educationLevel: z.enum(['high-school', 'diploma', 'undergraduate', 'postgraduate', 'phd', 'all'] as const).optional(),
+  educationLevel: z
+    .enum([
+      "high-school",
+      "diploma",
+      "undergraduate",
+      "postgraduate",
+      "phd",
+      "all",
+    ] as const)
+    .optional(),
   applicationUrl: z.string().optional(),
   benefits: z.array(z.string()).optional(),
-  gender: z.enum(['male', 'female', 'other', 'all'] as const).optional(),
+  gender: z.enum(["male", "female", "other", "all"] as const).optional(),
   status: z.enum(["draft", "active", "closed"]).optional(),
   publicationStatus: z.enum(["draft", "published"]).optional(),
-})
+});
 
 export const searchOpportunitySchema = z.object({
-  queryTerm:z.string().optional(),
-  page:z.coerce.number().default(1).optional(),
-  limit:z.coerce.number().default(10).optional(),
-  organizationType:z.preprocess((val) => (Array.isArray(val)?val:val?[val]:undefined),z.array(z.enum([
-        "government",
-        "private",
-        "university",
-        "ngo",
-        "start-up",
-        "non-profit",
-        "international organisation",
-      ]
+  queryTerm: z.string().optional(),
+  page: z.coerce.number().default(1).optional(),
+  limit: z.coerce.number().default(10).optional(),
+  organizationType: z
+    .preprocess(
+      (val) => (Array.isArray(val) ? val : val ? [val] : undefined),
+      z.array(
+        z.enum([
+          "government",
+          "private",
+          "university",
+          "ngo",
+          "start-up",
+          "non-profit",
+          "international organisation",
+        ])
+      )
     )
-  )
-).optional(),
+    .optional(),
 
-  category:z.enum([
-        "Scholarship",
-        "intership",
-        "hackathon",
-        "competition",
-        "fellowship",
-        "research",
-        "open-source",
-        "workshop",
-      ]).optional(),
-  sourceStatus:z.enum(["live","expired"]).optional(),
-  educationLevel:z.enum(['high-school' , 'diploma' , 'undergraduate' , 'postgraduate' , 'phd','all'] as const).optional(),
-   gender:z.enum(['male','female','other'] as const).optional()
-    
-
-
-
-    
-
-})
+  category: z
+    .enum([
+      "Scholarship",
+      "intership",
+      "internship",
+      "hackathon",
+      "competition",
+      "fellowship",
+      "research",
+      "open-source",
+      "workshop",
+    ])
+    .optional(),
+  sourceStatus: z.enum(["live", "expired"]).optional(),
+  educationLevel: z
+    .enum([
+      "high-school",
+      "diploma",
+      "undergraduate",
+      "postgraduate",
+      "phd",
+      "all",
+    ] as const)
+    .optional(),
+  gender: z.enum(["male", "female", "other"] as const).optional(),
+});
 
 export const getOpportunitiesBystatusSchema = z.object({
-  status:z.enum(["draft","active","closed"]).default("draft"),
-   page:z.coerce.number().default(1).optional(),
-  limit:z.coerce.number().default(10).optional(),
-})
+  status: z.enum(["draft", "active", "closed"]).default("draft"),
+  page: z.coerce.number().default(1).optional(),
+  limit: z.coerce.number().default(10).optional(),
+});
