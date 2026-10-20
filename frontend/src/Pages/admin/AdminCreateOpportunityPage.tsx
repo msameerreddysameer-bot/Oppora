@@ -855,7 +855,7 @@ export default function AdminCreateOpportunityPage() {
         </div>
 
         {/* DESKTOP LAYOUT (xl widths): grid-template-columns: 220px 1fr, gap: 28px */}
-        <div className="grid xl:grid-cols-[220px_1fr] gap-[28px] items-start">
+        <div className="grid xl:grid-cols-[220px_1fr] gap-7 items-start">
           {/* DESKTOP STICKY SECTION-NAVIGATION CARD */}
           <aside className="hidden xl:block sticky top-24 self-start rounded-2xl border border-slate-800 bg-slate-900/90 p-3 shadow-xl backdrop-blur-md space-y-1.5">
             <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800/80 mb-2">

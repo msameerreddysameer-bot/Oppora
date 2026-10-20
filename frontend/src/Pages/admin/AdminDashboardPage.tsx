@@ -743,7 +743,7 @@ export default function AdminDashboardPage() {
             >
               {/* Responsive Desktop Table */}
               <div className="hidden md:block relative overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-950/60 shadow-inner scrollbar-thin scrollbar-thumb-slate-700">
-                <table className="w-full text-left text-xs min-w-[780px] border-collapse">
+                <table className="w-full text-left text-xs min-w-195 border-collapse">
                   <thead className="sticky top-0 z-10 border-b border-slate-200 dark:border-slate-800 bg-slate-900/95 uppercase tracking-wider text-slate-400 text-[11px] backdrop-blur-md">
                     <tr>
                       <th className="py-3.5 px-4 font-semibold">Opportunity</th>

@@ -191,7 +191,7 @@ export default function AdminProfilePage() {
       {/* Light neutral page background with centered profile card */}
       <div className="min-h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-4 sm:p-6 bg-slate-50/50 dark:bg-slate-950/40 rounded-3xl">
         {/* Navigation back to dashboard */}
-        <div className="w-full max-w-[448px] mb-4 flex items-center justify-between">
+        <div className="w-full max-w-md mb-4 flex items-center justify-between">
           <button
             type="button"
             onClick={() => navigate("/admin")}
@@ -205,7 +205,7 @@ export default function AdminProfilePage() {
           </button>
         </div>
 
-        <div className="w-full max-w-[448px] rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/60 px-6 py-8 sm:p-9 text-center transition-all animate-in fade-in">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-slate-950/60 px-6 py-8 sm:p-9 text-center transition-all animate-in fade-in">
           {/* Success Banner */}
           {saveSuccess && (
             <div className="mb-6 flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -223,11 +223,11 @@ export default function AdminProfilePage() {
                   <img
                     src={avatarUrl}
                     alt={fullName}
-                    className="w-[112px] h-[112px] rounded-full object-cover object-center ring-4 ring-blue-500/20 shadow-md shadow-blue-500/10 select-none"
+                    className="w-28 h-28 rounded-full object-cover object-center ring-4 ring-blue-500/20 shadow-md shadow-blue-500/10 select-none"
                     onError={() => setAvatarUrl(null)}
                   />
                 ) : (
-                  <div className="w-[112px] h-[112px] rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700/80 ring-4 ring-blue-500/20 shadow-md shadow-blue-500/10 flex items-end justify-center select-none">
+                  <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700/80 ring-4 ring-blue-500/20 shadow-md shadow-blue-500/10 flex items-end justify-center select-none">
                     <svg
                       className="h-full w-full text-slate-400 dark:text-slate-500 pt-2"
                       fill="currentColor"
@@ -274,16 +274,16 @@ export default function AdminProfilePage() {
             /* EDIT MODE: Allows ONLY Changing profile photo and Changing full name. Email is visible but read-only. */
             <form onSubmit={handleSave} className="space-y-6">
               {/* Profile photo upload & preview: 112×112 with camera button */}
-              <div className="relative mx-auto w-[112px] h-[112px]">
+              <div className="relative mx-auto w-28 h-28">
                 {editAvatar ? (
                   <img
                     src={editAvatar}
                     alt={editName}
-                    className="w-[112px] h-[112px] rounded-full object-cover object-center ring-4 ring-blue-500/25 shadow-md shadow-blue-500/10 select-none"
+                    className="w-28 h-28 rounded-full object-cover object-center ring-4 ring-blue-500/25 shadow-md shadow-blue-500/10 select-none"
                     onError={() => setEditAvatar(null)}
                   />
                 ) : (
-                  <div className="w-[112px] h-[112px] rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700/80 ring-4 ring-blue-500/25 shadow-md shadow-blue-500/10 flex items-end justify-center select-none">
+                  <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700/80 ring-4 ring-blue-500/25 shadow-md shadow-blue-500/10 flex items-end justify-center select-none">
                     <svg
                       className="h-full w-full text-slate-400 dark:text-slate-500 pt-2"
                       fill="currentColor"

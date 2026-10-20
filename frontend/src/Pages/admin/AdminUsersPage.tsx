@@ -518,7 +518,7 @@ export default function AdminUsersPage() {
             <div className="hidden md:block relative overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60 shadow-inner scrollbar-thin scrollbar-thumb-slate-700">
               <table
                 className={`w-full text-left text-xs border-collapse ${
-                  activeRoleTab === "user" ? "min-w-[850px]" : "min-w-[650px]"
+                  activeRoleTab === "user" ? "min-w-212.5" : "min-w-162.5"
                 }`}
               >
                 <thead className="sticky top-0 z-10 border-b border-slate-800 bg-slate-900/95 uppercase tracking-wider text-slate-400 text-[11px] backdrop-blur-md">

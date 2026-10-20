@@ -165,7 +165,7 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col antialiased">
       {/* 1. Sticky Top Admin Bar (Height: 60px, Deep Blue Background, White Text) */}
-      <header className="sticky top-0 z-40 h-[60px] bg-[#0B1528] text-white border-b border-white/10 px-4 sm:px-6 flex items-center justify-between shadow-sm shrink-0">
+      <header className="sticky top-0 z-40 h-15 bg-[#0B1528] text-white border-b border-white/10 px-4 sm:px-6 flex items-center justify-between shadow-sm shrink-0">
         <div className="flex items-center gap-3">
           {/* Mobile hamburger toggle (< lg) */}
           <button
@@ -236,7 +236,7 @@ export default function AdminLayout({
               <div className="text-xs font-semibold text-white leading-tight group-hover:text-cyan-300 transition-colors">
                 {displayName}
               </div>
-              <div className="text-[10px] text-slate-300 truncate max-w-[140px]">
+              <div className="text-[10px] text-slate-300 truncate max-w-35">
                 {displayEmail}
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function AdminLayout({
       {/* Body Container: Desktop Sidebar + Main Content */}
       <div className="flex flex-1 min-w-0">
         {/* 2. Desktop Sidebar: Width w-56 (224px), Sticky below top bar, White light / Slate dark */}
-        <aside className="hidden lg:flex w-56 shrink-0 flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sticky top-[60px] h-[calc(100vh-60px)] overflow-y-auto">
+        <aside className="hidden lg:flex w-56 shrink-0 flex-col justify-between border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sticky top-15 h-[calc(100vh-60px)] overflow-y-auto">
           <div className="space-y-4">
             <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               Admin Menu
