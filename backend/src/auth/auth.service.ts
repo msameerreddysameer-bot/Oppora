@@ -65,7 +65,11 @@ const sendVerificationEmail = async (
   route: string
 ) => {
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const frontendUrl = process.env.CORS_ORIGIN || "http://localhost:5173";
+  const rawFrontendUrl =
+    process.env.FRONTEND_URL ||
+    process.env.CORS_ORIGIN ||
+    "https://oppora-iota.vercel.app";
+  const frontendUrl = rawFrontendUrl.replace(/\/+$/, "");
   const link = `${frontendUrl}/${route}?token=${token}`;
   const isResetPassword = route === "reset-password";
   const subject = isResetPassword
