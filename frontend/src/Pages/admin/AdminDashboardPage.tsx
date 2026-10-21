@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [totalOpportunitiesCount, setTotalOpportunitiesCount] = useState(0);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Modal & Feedback States
   const [opportunityToPublish, setOpportunityToPublish] =

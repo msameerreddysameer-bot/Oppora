@@ -53,7 +53,7 @@ export default function AdminOpportunitiesPage() {
     return [];
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -1014,7 +1014,7 @@ export default function AdminOpportunitiesPage() {
         )}
 
         {/* Loading Skeleton */}
-        {isLoading && opportunities.length === 0 ? (
+        {isLoading && filtered.length === 0 ? (
           <div className="py-4">
             <TableSkeleton rows={6} cols={6} />
           </div>

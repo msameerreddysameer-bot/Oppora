@@ -2,8 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import InfiniteScroll from "react-infinite-scroll-component";
 import {
+  AlertCircle,
   ArrowLeft,
+  CheckCircle2,
   GraduationCap,
+  Loader2,
   Search,
   ShieldAlert,
   ShieldCheck,
@@ -112,6 +115,26 @@ export default function AdminUsersPage() {
 
   // Selected photo for preview modal
   const [previewUser, setPreviewUser] = useState<AdminUserAccount | null>(null);
+
+  // Professional role toggle confirmation modal
+  const [confirmAction, setConfirmAction] = useState<{
+    type: "promote" | "demote";
+    user: AdminUserAccount;
+  } | null>(null);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+
+  // Toast notification state
+  const [toast, setToast] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Auto-dismiss toast notification after 4 seconds
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Purge any stale mock data previously stored in localStorage
   useEffect(() => {
@@ -282,71 +305,78 @@ export default function AdminUsersPage() {
     }
   };
 
-  // =========================================================================
-  // [BACKEND API: PROMOTE USER TO ADMIN]
-  // Hits PATCH /user/toggle-role via opportunityService.apiToogleUserRoleByEmail()
-  // =========================================================================
-  const handlePromote = async (userId: string, email?: string) => {
-    const target = users.find((u) => u._id === userId);
-    if (!target) return;
-    const userEmail = email || target.email;
-
-    if (
-      !window.confirm(
-        `Promote ${target.fullName} to Administrator? This account will move to the Admin Users tab.`
-      )
-    ) {
-      return;
-    }
-
-    try {
-      if (userEmail) {
-        await apiToogleUserRoleByEmail({ email: userEmail });
-      }
-      // Remove from current Users tab list immediately
-      setUsers((prev) => prev.filter((u) => u._id !== userId));
-      setCounts((prev) => ({
-        user: Math.max(0, prev.user - 1),
-        admin: prev.admin + 1,
-      }));
-    } catch (err: any) {
-      alert(
-        `Failed to promote user: ${err?.response?.data?.message || err?.message || "Server error"}`
-      );
+  // Handle switching role tabs with instant skeleton feedback (no stale-data empty state flicker)
+  const handleRoleTabChange = (tab: "user" | "admin") => {
+    if (activeRoleTab !== tab) {
+      setIsLoading(true);
+      setUsers([]);
+      setActiveRoleTab(tab);
     }
   };
 
-  // =========================================================================
-  // [BACKEND API: DEMOTE ADMIN TO REGULAR USER]
-  // Hits PATCH /user/toggle-role via opportunityService.apiToogleUserRoleByEmail()
-  // =========================================================================
-  const handleDemote = async (userId: string, email?: string) => {
+  // Open professional confirmation modal for promoting user
+  const handlePromote = (userId: string, email?: string) => {
     const target = users.find((u) => u._id === userId);
     if (!target) return;
-    const userEmail = email || target.email;
+    setConfirmAction({
+      type: "promote",
+      user: { ...target, email: email || target.email },
+    });
+  };
 
-    if (
-      !window.confirm(
-        `Demote ${target.fullName} to Regular User? This account will move to the Users tab.`
-      )
-    ) {
-      return;
-    }
+  // Open professional confirmation modal for demoting admin
+  const handleDemote = (userId: string, email?: string) => {
+    const target = users.find((u) => u._id === userId);
+    if (!target) return;
+    setConfirmAction({
+      type: "demote",
+      user: { ...target, email: email || target.email },
+    });
+  };
+
+  // Execute role toggle with clean toast feedback
+  const executeRoleToggle = async () => {
+    if (!confirmAction) return;
+    const { type, user: targetUser } = confirmAction;
+    setIsActionLoading(true);
 
     try {
-      if (userEmail) {
-        await apiToogleUserRoleByEmail({ email: userEmail });
+      if (targetUser.email) {
+        await apiToogleUserRoleByEmail({ email: targetUser.email });
       }
-      // Remove from current Admin Users tab list immediately
-      setUsers((prev) => prev.filter((u) => u._id !== userId));
+
+      // Remove from current active tab list immediately
+      setUsers((prev) => prev.filter((u) => u._id !== targetUser._id));
       setCounts((prev) => ({
-        admin: Math.max(0, prev.admin - 1),
-        user: prev.user + 1,
+        user:
+          type === "promote"
+            ? Math.max(0, prev.user - 1)
+            : prev.user + 1,
+        admin:
+          type === "promote"
+            ? prev.admin + 1
+            : Math.max(0, prev.admin - 1),
       }));
+
+      setToast({
+        type: "success",
+        message:
+          type === "promote"
+            ? `Successfully promoted ${targetUser.fullName} to Administrator.`
+            : `Successfully demoted ${targetUser.fullName} to Regular User.`,
+      });
+
+      setConfirmAction(null);
     } catch (err: any) {
-      alert(
-        `Failed to demote user: ${err?.response?.data?.message || err?.message || "Server error"}`
-      );
+      setToast({
+        type: "error",
+        message:
+          err?.response?.data?.message ||
+          err?.message ||
+          `Failed to ${type} user. Please try again.`,
+      });
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
@@ -407,7 +437,7 @@ export default function AdminUsersPage() {
           <div className="flex items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/90 p-1.5 shadow-inner">
             <button
               type="button"
-              onClick={() => setActiveRoleTab("user")}
+              onClick={() => handleRoleTabChange("user")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                 activeRoleTab === "user"
                   ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-cyan-400/40"
@@ -429,7 +459,7 @@ export default function AdminUsersPage() {
 
             <button
               type="button"
-              onClick={() => setActiveRoleTab("admin")}
+              onClick={() => handleRoleTabChange("admin")}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
                 activeRoleTab === "admin"
                   ? "bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-cyan-400/40"
@@ -471,7 +501,7 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Loading Skeletons */}
-        {isLoading && users.length === 0 ? (
+        {isLoading ? (
           <TableSkeleton rows={6} cols={activeRoleTab === "user" ? 6 : 4} />
         ) : filteredList.length === 0 ? (
           <div className="py-16 text-center text-xs text-slate-400 rounded-2xl border border-slate-800 bg-slate-900/40 space-y-1">
@@ -758,46 +788,65 @@ export default function AdminUsersPage() {
                 </p>
               </div>
 
-              {previewUser.role === "user" &&
-              (previewUser.college ||
-                previewUser.branch ||
-                previewUser.year) ? (
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3 text-xs space-y-1.5 text-left text-slate-300">
-                  {previewUser.college && (
-                    <p className="flex items-center gap-1.5 truncate">
-                      <GraduationCap
-                        size={13}
-                        className="text-cyan-400 shrink-0"
-                      />
-                      <span className="text-slate-400">College:</span>{" "}
-                      <span className="text-white font-medium truncate">
-                        {previewUser.college}
-                      </span>
-                    </p>
-                  )}
-                  {previewUser.branch && (
-                    <p className="truncate">
-                      <span className="text-slate-400">Branch:</span>{" "}
-                      <span className="text-white font-medium">
-                        {previewUser.branch}
-                      </span>
-                    </p>
-                  )}
-                  {previewUser.year && (
-                    <p>
-                      <span className="text-slate-400">Year:</span>{" "}
-                      <span className="text-white font-medium">
-                        {previewUser.year}
-                      </span>
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3 text-xs text-center text-slate-300">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-400 ring-1 ring-emerald-500/25">
-                    <ShieldCheck size={12} />
+              {/* Profile Details or Role Info */}
+              {previewUser.role === "admin" ? (
+                <div className="rounded-2xl border border-emerald-500/25 bg-emerald-950/20 p-3.5 text-center text-slate-300 space-y-1">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-400 ring-1 ring-emerald-500/30">
+                    <ShieldCheck size={13} />
                     Platform Administrator
                   </span>
+                  <p className="text-[11px] text-slate-400">
+                    Full administrative privileges across Oppora.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5 text-xs text-left text-slate-300 space-y-2">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-cyan-300 ring-1 ring-cyan-500/20">
+                      <GraduationCap size={12} />
+                      Regular Student
+                    </span>
+                    {previewUser.joinedDate && (
+                      <span className="text-[10px] text-slate-500">
+                        Joined {previewUser.joinedDate}
+                      </span>
+                    )}
+                  </div>
+
+                  {previewUser.college ||
+                  previewUser.branch ||
+                  previewUser.year ? (
+                    <div className="space-y-1.5 pt-0.5">
+                      {previewUser.college && (
+                        <p className="flex items-center gap-1.5 truncate">
+                          <span className="text-slate-500 text-[11px]">College:</span>{" "}
+                          <span className="text-white font-medium truncate">
+                            {previewUser.college}
+                          </span>
+                        </p>
+                      )}
+                      {previewUser.branch && (
+                        <p className="truncate">
+                          <span className="text-slate-500 text-[11px]">Branch:</span>{" "}
+                          <span className="text-white font-medium">
+                            {previewUser.branch}
+                          </span>
+                        </p>
+                      )}
+                      {previewUser.year && (
+                        <p>
+                          <span className="text-slate-500 text-[11px]">Year:</span>{" "}
+                          <span className="text-white font-medium">
+                            {previewUser.year}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-center py-1 text-slate-400 text-xs italic">
+                      Student profile details (college, branch) not provided yet.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -822,6 +871,157 @@ export default function AdminUsersPage() {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Professional Role Toggle Confirmation Modal */}
+        {confirmAction && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in">
+            <div className="relative w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+              <button
+                type="button"
+                onClick={() => setConfirmAction(null)}
+                disabled={isActionLoading}
+                className="absolute right-4 top-4 rounded-full p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                    confirmAction.type === "promote"
+                      ? "bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20"
+                      : "bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/20"
+                  }`}
+                >
+                  {confirmAction.type === "promote" ? (
+                    <ShieldCheck size={24} />
+                  ) : (
+                    <ShieldAlert size={24} />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {confirmAction.type === "promote"
+                      ? "Promote to Administrator"
+                      : "Demote to Regular User"}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {confirmAction.type === "promote"
+                      ? "Grant full administrative permissions"
+                      : "Revoke administrative permissions"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Target User Info Card */}
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5">
+                <UserAvatar
+                  avatar={confirmAction.user.avatar}
+                  name={confirmAction.user.fullName}
+                  size="md"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-white text-sm truncate">
+                    {confirmAction.user.fullName}
+                  </div>
+                  <div className="text-xs text-slate-400 font-mono truncate">
+                    {confirmAction.user.email}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {confirmAction.type === "promote" ? (
+                  <>
+                    Are you sure you want to promote{" "}
+                    <span className="font-semibold text-white">
+                      {confirmAction.user.fullName}
+                    </span>{" "}
+                    to an Administrator? This account will gain complete access to
+                    manage opportunities, users, and platform settings.
+                  </>
+                ) : (
+                  <>
+                    Are you sure you want to demote{" "}
+                    <span className="font-semibold text-white">
+                      {confirmAction.user.fullName}
+                    </span>{" "}
+                    to a Regular User? They will lose access to all admin tools
+                    and move to the standard student users list.
+                  </>
+                )}
+              </p>
+
+              <div className="flex items-center gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setConfirmAction(null)}
+                  disabled={isActionLoading}
+                  className="flex-1 rounded-xl border border-slate-700 bg-slate-800/80 py-2.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={executeRoleToggle}
+                  disabled={isActionLoading}
+                  className={`flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-semibold text-white transition-all shadow-md disabled:opacity-50 ${
+                    confirmAction.type === "promote"
+                      ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-950/40"
+                      : "bg-amber-600 hover:bg-amber-500 shadow-amber-950/40"
+                  }`}
+                >
+                  {isActionLoading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : confirmAction.type === "promote" ? (
+                    <ShieldCheck size={14} />
+                  ) : (
+                    <ShieldAlert size={14} />
+                  )}
+                  <span>
+                    {isActionLoading
+                      ? "Updating..."
+                      : confirmAction.type === "promote"
+                        ? "Confirm Promotion"
+                        : "Confirm Demotion"}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Floating Toast Notification */}
+        {toast && (
+          <div
+            role="status"
+            aria-live="polite"
+            className={`fixed right-4 top-5 z-50 flex max-w-sm items-start gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-md transition-all animate-in slide-in-from-top-2 duration-200 ${
+              toast.type === "success"
+                ? "border-emerald-500/40 bg-slate-900/95 text-emerald-200 ring-1 ring-emerald-500/30"
+                : "border-rose-500/40 bg-slate-900/95 text-rose-200 ring-1 ring-rose-500/30"
+            }`}
+          >
+            <div className="mt-0.5 shrink-0">
+              {toast.type === "success" ? (
+                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-rose-400" />
+              )}
+            </div>
+            <div className="flex-1 text-xs text-slate-200 leading-relaxed font-medium">
+              {toast.message}
+            </div>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="text-slate-400 hover:text-white transition-colors"
+              aria-label="Dismiss notification"
+            >
+              <X size={15} />
+            </button>
           </div>
         )}
       </div>
