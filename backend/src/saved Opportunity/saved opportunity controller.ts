@@ -19,27 +19,38 @@ const saveOpportunity = asyncHandler(async (req, res) => {
     throw new ApiError(400, "invalid opportunityId");
   }
 
+  const userId = (req as any).user._id;
+
+  const targetOpportunity = await Opportunity.findById(opportunityId);
+  if (!targetOpportunity) {
+    throw new ApiError(404, "Opportunity not found");
+  }
+
   const alreadyExistsSavedOpportunity = await SavedOpportunity.findOne({
     opportunity: opportunityId,
-    user: (req as any).user._id,
+    user: userId,
   });
 
   if (alreadyExistsSavedOpportunity) {
-    throw new ApiError(409, "opportunity is already saved");
-  }
-  const opportunity = await SavedOpportunity.create({
-    user: (req as any).user._id,
-    opportunity: new Types.ObjectId(opportunityId as string),
-    savedAt: new Date(),
-  });
-
-  if (!opportunity) {
-    throw new ApiError(500, "Something went wrong while saving opportunity");
+    throw new ApiError(409, "Opportunity is already saved");
   }
 
-  res
-    .status(201)
-    .json(new ApiResponse(201, opportunity, "Opportunity saved successfully"));
+  try {
+    const opportunity = await SavedOpportunity.create({
+      user: userId,
+      opportunity: new Types.ObjectId(opportunityId as string),
+      savedAt: new Date(),
+    });
+
+    res
+      .status(201)
+      .json(new ApiResponse(201, opportunity, "Opportunity saved successfully"));
+  } catch (err: any) {
+    if (err?.code === 11000) {
+      throw new ApiError(409, "Opportunity is already saved");
+    }
+    throw err;
+  }
 });
 
 const unSaveOpportunity = asyncHandler(async (req, res) => {
@@ -499,23 +510,28 @@ const getSavedOpportunityById = asyncHandler(async (req, res) => {
   const { savedOpportunityId } = req.params;
 
   if (!savedOpportunityId) {
-    throw new ApiError(400, "saved opportunity Id is required");
+    throw new ApiError(400, "Saved opportunity ID is required");
   }
 
   if (!isValidObjectId(savedOpportunityId)) {
-    throw new ApiError(400, "invalid saved opportunity object id");
+    throw new ApiError(400, "Invalid saved opportunity ID");
   }
 
-  const opportunity = await SavedOpportunity.findById(savedOpportunityId);
+  const userId = (req as any).user._id;
+
+  const opportunity = await SavedOpportunity.findOne({
+    _id: savedOpportunityId,
+    user: userId,
+  }).populate("opportunity");
 
   if (!opportunity) {
-    throw new ApiError(400, "opportunity not found");
+    throw new ApiError(404, "Saved opportunity not found or unauthorized");
   }
 
   res
     .status(200)
     .json(
-      new ApiResponse(200, opportunity, "opportunity fetched successfully")
+      new ApiResponse(200, opportunity, "Opportunity fetched successfully")
     );
 });
 

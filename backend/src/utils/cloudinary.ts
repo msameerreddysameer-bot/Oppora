@@ -8,6 +8,16 @@ cloudinary.config({
   api_secret: env.CLOUDINARY_API_SECRET,
 });
 
+const safeUnlink = (filePath: string) => {
+  try {
+    if (filePath && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (unlinkErr) {
+    console.warn("[Cloudinary] File cleanup notice:", (unlinkErr as any)?.message);
+  }
+};
+
 const uploadOnCloudinary = async (localFilePath: string) => {
   try {
     if (!localFilePath) return null;
@@ -16,12 +26,10 @@ const uploadOnCloudinary = async (localFilePath: string) => {
       resource_type: "auto",
     });
 
-    fs.unlinkSync(localFilePath);
+    safeUnlink(localFilePath);
     return response;
   } catch (error) {
-    if (fs.existsSync(localFilePath)) {
-      fs.unlinkSync(localFilePath);
-    }
+    safeUnlink(localFilePath);
     console.error(
       "[Cloudinary Upload Error]:",
       (error as any)?.message || "Upload failed"

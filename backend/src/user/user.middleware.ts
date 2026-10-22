@@ -8,9 +8,11 @@ const isAdmin = asyncHandler(async (req, _, next) => {
   try {
     const user =
       (req as any).user ||
-      (await User.findById((req as any).user?._id).select(
-        "-password -refreshToken"
-      ));
+      ((req as any).user?._id
+        ? await User.findById((req as any).user._id).select(
+            "-password -refreshToken"
+          )
+        : null);
 
     if (!user) {
       throw new ApiError(401, "Unauthorized request");
@@ -34,15 +36,17 @@ const isUser = asyncHandler(async (req, _, next) => {
   try {
     const user =
       (req as any).user ||
-      (await User.findById((req as any).user?._id).select(
-        "-password -refreshToken"
-      ));
+      ((req as any).user?._id
+        ? await User.findById((req as any).user._id).select(
+            "-password -refreshToken"
+          )
+        : null);
 
     if (!user) {
       throw new ApiError(401, "Unauthorized request");
     }
 
-    if (user.role !== "user") {
+    if (user.role !== "user" && user.role !== "admin") {
       throw new ApiError(403, "Access denied: User privileges required");
     }
 

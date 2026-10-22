@@ -17,6 +17,7 @@
   "scripts": {
     "dev": "nodemon --exec tsx -r dotenv/config src/server.ts",
     "build": "tsc",
+    "test": "tsx --test src/__tests__/**/*.test.ts",
     "start": "tsx src/server.ts",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\""

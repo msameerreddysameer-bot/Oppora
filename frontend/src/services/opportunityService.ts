@@ -191,7 +191,7 @@ export const getOpportunitiesById = async (opportunityId: string) => {
  * Saves/bookmarks an opportunity for the authenticated student.
  */
 export const saveOpportinity = async (opportunityId: string) => {
-  const response = await api.post(`/saved-opportunities/test/${opportunityId}`);
+  const response = await api.post(`/saved-opportunities/${opportunityId}`);
   return response.data;
 };
 
@@ -200,7 +200,7 @@ export const saveOpportinity = async (opportunityId: string) => {
  */
 export const unSaveOpportunity = async (opportunityId: string) => {
   const response = await api.delete(
-    `/saved-opportunities/test/${opportunityId}`
+    `/saved-opportunities/${opportunityId}`
   );
   return response.data;
 };
@@ -210,7 +210,7 @@ export const unSaveOpportunity = async (opportunityId: string) => {
  */
 export const checkSavedOpportunity = async (opportunityId: string) => {
   const response = await api.post(
-    `/saved-opportunities/test/check/${opportunityId}`
+    `/saved-opportunities/check/${opportunityId}`
   );
   return response.data.data.isSaved;
 };
@@ -424,7 +424,7 @@ export const apiSearchAndFilters = async ({
 /**
  * Fetches aggregate opportunity statistics for the admin dashboard.
  */
-export const apiGetOpportunityStats = async (_opportunityId?: string) => {
+export const apiGetOpportunityStats = async () => {
   const response = await api.get(`/opportunity/stats`);
   return response.data;
 };

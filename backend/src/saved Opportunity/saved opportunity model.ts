@@ -27,6 +27,9 @@ const savedOpportunitySchema = new Schema<IOpportunity>(
   { timestamps: true }
 );
 
+// Compound unique index preventing duplicate saves by the same user
+savedOpportunitySchema.index({ user: 1, opportunity: 1 }, { unique: true });
+
 const SavedOpportunity = model("SavedOpportunity", savedOpportunitySchema);
 
 export { SavedOpportunity };

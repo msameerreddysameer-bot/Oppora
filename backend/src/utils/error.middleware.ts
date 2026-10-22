@@ -27,10 +27,24 @@ export const errorHandler = (
     error = new ApiError(statusCode, message, error?.errors || [], error.stack);
   }
 
+  // Handle Multer upload errors (size limit, invalid fields)
+  if (err.name === "MulterError") {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      error = new ApiError(400, "File size exceeds the 5MB maximum limit");
+    } else {
+      error = new ApiError(400, `File upload error: ${err.message}`);
+    }
+  }
+
   // Handle Mongoose duplicate key error (code 11000)
   if (err.code === 11000) {
-    const field = Object.keys(err.keyValue || {})[0] || "field";
-    error = new ApiError(409, `${field} already exists`);
+    const keys = Object.keys(err.keyValue || {});
+    if (keys.includes("user") && keys.includes("opportunity")) {
+      error = new ApiError(409, "You have already applied to or saved this opportunity");
+    } else {
+      const field = keys[0] || "Record";
+      error = new ApiError(409, `${field} already exists`);
+    }
   }
 
   // Handle Mongoose CastError (invalid ObjectId)

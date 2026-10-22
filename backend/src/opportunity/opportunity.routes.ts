@@ -34,8 +34,6 @@ router
   );
 router.route("/:id").delete(verifyJWT, isAdmin, deleteOpportunity);
 
-//testing purpose only
-//router.route("/testSearch").get(searchAndFilterOpportunity);
 router
   .route("/status/:status")
   .get(verifyJWT, isAdmin, getOpportunitiesBystatus);

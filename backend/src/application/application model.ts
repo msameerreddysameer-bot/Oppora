@@ -35,4 +35,7 @@ const applicationSchema = new Schema<IApplication>(
   { timestamps: true }
 );
 
+// Compound unique index ensuring one user cannot submit duplicate applications for the same opportunity
+applicationSchema.index({ user: 1, opportunity: 1 }, { unique: true });
+
 export const Application = model("Application", applicationSchema);

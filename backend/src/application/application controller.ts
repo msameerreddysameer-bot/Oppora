@@ -34,29 +34,40 @@ const createApplication = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid opportunity ID");
   }
 
+  const userId = (req as any).user._id;
+
+  const opportunity = await Opportunity.findById(opportunityId);
+  if (!opportunity) {
+    throw new ApiError(404, "Opportunity not found");
+  }
+
   const alreadyExistsApplication = await Application.findOne({
+    user: userId,
     opportunity: new mongoose.Types.ObjectId(opportunityId as any) as any,
   });
 
   if (alreadyExistsApplication) {
-    throw new ApiError(409, "Application already exists");
+    throw new ApiError(409, "You have already applied to this opportunity");
   }
 
-  const application = await Application.create({
-    user: (req as any).user._id,
-    opportunity: new Types.ObjectId(opportunityId as string),
-    status: status,
-  });
+  try {
+    const application = await Application.create({
+      user: userId,
+      opportunity: new Types.ObjectId(opportunityId as string),
+      status: status,
+    });
 
-  if (!application) {
-    throw new ApiError(500, "Failed to create application");
+    res
+      .status(201)
+      .json(
+        new ApiResponse(201, application, "Application created successfully")
+      );
+  } catch (err: any) {
+    if (err?.code === 11000) {
+      throw new ApiError(409, "You have already applied to this opportunity");
+    }
+    throw err;
   }
-
-  res
-    .status(201)
-    .json(
-      new ApiResponse(201, application, "Application created successfully")
-    );
 });
 
 const updateApplication = asyncHandler(async (req, res) => {
@@ -79,8 +90,13 @@ const updateApplication = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid application ID");
   }
 
-  const updatedApplication = await Application.findByIdAndUpdate(
-    applicationId,
+  const userId = (req as any).user._id;
+
+  const updatedApplication = await Application.findOneAndUpdate(
+    {
+      _id: applicationId,
+      user: userId,
+    },
     {
       $set: {
         status: status,
@@ -88,12 +104,12 @@ const updateApplication = asyncHandler(async (req, res) => {
     },
     {
       returnDocument: "after",
-      runValidators: false,
+      runValidators: true,
     }
   );
 
   if (!updatedApplication) {
-    throw new ApiError(404, "Application not found");
+    throw new ApiError(404, "Application not found or unauthorized");
   }
 
   res
@@ -118,10 +134,15 @@ const deleteApplication = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid application ID");
   }
 
-  const deletedApplication = await Application.findByIdAndDelete(applicationId);
+  const userId = (req as any).user._id;
+
+  const deletedApplication = await Application.findOneAndDelete({
+    _id: applicationId,
+    user: userId,
+  });
 
   if (!deletedApplication) {
-    throw new ApiError(404, "Application not found");
+    throw new ApiError(404, "Application not found or unauthorized");
   }
 
   res
@@ -146,10 +167,15 @@ const getApplicationById = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid application ID");
   }
 
-  const application = await Application.findById(applicationId);
+  const userId = (req as any).user._id;
+
+  const application = await Application.findOne({
+    _id: applicationId,
+    user: userId,
+  });
 
   if (!application) {
-    throw new ApiError(404, "Application not found");
+    throw new ApiError(404, "Application not found or unauthorized");
   }
 
   res

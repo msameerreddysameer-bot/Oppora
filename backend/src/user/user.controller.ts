@@ -96,7 +96,7 @@ const updateUserProfileDetails = asyncHandler(async (req, res) => {
       returnDocument: "after",
       runValidators: false,
     }
-  );
+  ).select("-password -refreshToken");
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -154,6 +154,19 @@ const toogleUserRoleByEmail = asyncHandler(async (req, res) => {
   if (!user) {
     throw new ApiError(404, "User not found");
   }
+
+  const currentAdminId = (req as any).user?._id;
+  if (user._id.toString() === currentAdminId?.toString()) {
+    throw new ApiError(400, "Administrators cannot change their own role");
+  }
+
+  if (user.role === "admin") {
+    const adminCount = await User.countDocuments({ role: "admin" });
+    if (adminCount <= 1) {
+      throw new ApiError(400, "Cannot demote the last remaining administrator");
+    }
+  }
+
   if (user?.role === "user") {
     user.role = "admin";
   } else {
