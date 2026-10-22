@@ -683,9 +683,21 @@ export default function StudentDashboardPage(
                 <button
                   type="button"
                   onClick={() => setMobileFiltersOpen(false)}
-                  className="rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white"
+                  disabled={initialLoading}
+                  className="flex items-center gap-2 rounded-lg bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:opacity-70"
                 >
-                  Show {opportunitiesList.length} results
+                  {initialLoading ? (
+                    <span>Updating...</span>
+                  ) : totalResults === 0 && opportunitiesList.length === 0 ? (
+                    <span>No matching results</span>
+                  ) : (
+                    <span>
+                      Show {totalResults > 0 ? totalResults : opportunitiesList.length}{" "}
+                      {(totalResults > 0 ? totalResults : opportunitiesList.length) === 1
+                        ? "result"
+                        : "results"}
+                    </span>
+                  )}
                 </button>
               </div>
             </section>
