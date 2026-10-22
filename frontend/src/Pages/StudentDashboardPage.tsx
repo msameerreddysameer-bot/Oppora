@@ -17,7 +17,6 @@ import OpportunityCard from "@/components/student/OpportunityCard";
 import {
   type IOpportunity,
   type OpportunityEducationLevel,
-  type OpportunityGender,
   type OpportunityorganizationType,
   type OpportunitySourceStatus,
 } from "@/types/studentTypesData";
@@ -39,7 +38,6 @@ const CATEGORY_OPTIONS = [
   "open Source",
   "workshop",
 ];
-const GENDER_OPTIONS: OpportunityGender[] = ["all", "Male", "Female", "Other"];
 const SOURCE_OPTIONS: Array<OpportunitySourceStatus | "all"> = [
   "all",
   "live",
@@ -63,12 +61,10 @@ const ORGANISATION_OPTIONS: Array<OpportunityorganizationType | "all"> = [
   "non-Profit",
   "international organisation",
 ];
-type FilterKey =
-  "category" | "gender" | "source" | "organisation" | "education";
+type FilterKey = "category" | "source" | "organisation" | "education";
 
 type DiscoverFilters = {
   category: "all" | string;
-  gender: OpportunityGender;
   sourceStatus: OpportunitySourceStatus | "all";
   organizationType: OpportunityorganizationType | "all";
   educationLevel: OpportunityEducationLevel | "all";
@@ -166,25 +162,6 @@ function FilterPanel({
         ))}
       </FilterGroup>
       <FilterGroup
-        title="Gender"
-        open={openSection === "gender"}
-        onToggle={() => toggle("gender")}
-      >
-        <div className="grid grid-cols-2 gap-2">
-          {GENDER_OPTIONS.map((gender) => (
-            <button
-              key={gender}
-              type="button"
-              aria-pressed={filters.gender === gender}
-              onClick={() => setFilters({ ...filters, gender })}
-              className={`rounded-lg border px-3 py-2 text-xs font-semibold ${filters.gender === gender ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 text-slate-600 hover:border-blue-400 dark:border-slate-600 dark:text-slate-300"}`}
-            >
-              {gender}
-            </button>
-          ))}
-        </div>
-      </FilterGroup>
-      <FilterGroup
         title="Source Status"
         open={openSection === "source"}
         onToggle={() => toggle("source")}
@@ -254,7 +231,6 @@ export default function StudentDashboardPage(
   ]);
   const [filters, setFilters] = useState<DiscoverFilters>({
     category: "all",
-    gender: "all",
     sourceStatus: "all",
     organizationType: "all",
     educationLevel: "all",
@@ -298,9 +274,6 @@ export default function StudentDashboardPage(
       ...(filters.educationLevel !== "all" && {
         educationLevel: filters.educationLevel,
       }),
-      ...(filters.gender !== "all" && {
-        gender: filters.gender,
-      }),
     }),
     [
       filters.category,
@@ -308,13 +281,11 @@ export default function StudentDashboardPage(
       filters.sourceStatus,
       debouncedQuery,
       filters.educationLevel,
-      filters.gender,
     ]
   );
 
   const activeFilterCount =
     Number(filters.category !== "all") +
-    Number(filters.gender !== "all") +
     Number(filters.sourceStatus !== "all") +
     Number(filters.organizationType !== "all") +
     Number(filters.educationLevel !== "all");
@@ -501,7 +472,6 @@ export default function StudentDashboardPage(
   function resetFilters() {
     setFilters({
       category: "all",
-      gender: "all",
       sourceStatus: "all",
       organizationType: "all",
       educationLevel: "all",

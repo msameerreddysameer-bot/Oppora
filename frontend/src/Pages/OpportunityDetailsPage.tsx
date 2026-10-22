@@ -323,13 +323,24 @@ export default function OpportunityDetailsPage() {
             </DetailSection>
             <DetailSection icon={Gift} title="What you get">
               <ul className="flex flex-col gap-2">
-                {["this a first benefit", "2nd benefit", "third benefit"].map(
-                  (item) => (
+                {Array.isArray((opportunityDetails as IOpportunity)?.benefits) &&
+                (opportunityDetails as IOpportunity).benefits.length > 0 ? (
+                  (opportunityDetails as IOpportunity).benefits.map((item) => (
                     <li key={item} className="flex items-start gap-2">
                       <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-500" />
                       {item}
                     </li>
-                  )
+                  ))
+                ) : (opportunityDetails as IOpportunity)?.benefitsSummary ? (
+                  <li className="flex items-start gap-2">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-500" />
+                    {(opportunityDetails as IOpportunity).benefitsSummary}
+                  </li>
+                ) : (
+                  <li className="flex items-start gap-2 text-slate-500 dark:text-slate-400">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-500" />
+                    Check the official announcement for detailed benefits and awards.
+                  </li>
                 )}
               </ul>
             </DetailSection>
