@@ -380,11 +380,8 @@ Oppora is engineered with defense-in-depth principles across the entire applicat
 
 ## Known Limitations & Current Scope
 
-- **In-App Resume Builder:** The student profile contains placeholders for an interactive resume generator that is currently under design.
-- **Third-Party Email Rate Limits:** Free-tier Resend accounts allow delivery only to registered development emails; production deployment requires a verified custom domain.
-- **Background Cron Deadlines:** Opportunity expiration is verified dynamically upon query; automated cron-based status transitions are planned for future releases.
-
-
+- - **Production Domain Verified:** While standard free-tier Resend accounts restrict delivery to registered sandbox emails, our deployed platform completely bypasses this limitation using our verified custom domain **`oppora.me`**.
+    
 ---
 
 ## Contributing
@@ -398,12 +395,6 @@ Contributions, issues, and feature requests are welcome!
 5. Open a Pull Request.
 
 Please ensure that you run `npm run format:check` and build both frontend and backend before submitting a PR.
-
----
-
-## License
-
-This project is licensed under the [ISC License](https://opensource.org/licenses/ISC).
 
 ---
 
