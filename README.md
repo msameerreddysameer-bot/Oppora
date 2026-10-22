@@ -10,7 +10,6 @@
 [![React](https://img.shields.io/badge/Frontend-React%2019%20%7C%20TypeScript%20%7C%20Tailwind%20v4-61dafb?style=flat&logo=react)](frontend/README.md)
 [![Express](https://img.shields.io/badge/Backend-Express%205%20%7C%20Node.js%20%7C%20Mongoose%209-000000?style=flat&logo=express)](backend/README.md)
 [![Database](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?style=flat&logo=mongodb)](https://www.mongodb.com/)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 
 *Oppora connects aspiring students with verified scholarships, internships, hackathons, and research grants, providing an end-to-end application tracking workflow and administrative governance tools.*
 
