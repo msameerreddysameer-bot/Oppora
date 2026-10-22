@@ -124,16 +124,18 @@ export default function AdminDashboardPage() {
       // Use fallback defaults on error
     }
 
-    // 2. Fetch recently added opportunities for the table (Page 1, Limit 50)
+    // 2. Fetch recently added & updated opportunities for the table (Page 1, Limit 50)
     try {
       const res = await apiSearchOpportunities({ page: 1, limit: 50 });
       const liveList =
-        res?.data?.opportunities || res?.opportunities || res?.data || [];
+        res?.data?.results ||
+        res?.data?.data?.results ||
+        res?.results ||
+        (Array.isArray(res?.data) ? res.data : []);
       const total =
         res?.data?.totalResults ??
-        res?.data?.total ??
+        res?.data?.data?.totalResults ??
         res?.totalResults ??
-        res?.total ??
         (Array.isArray(liveList) ? liveList.length : 0);
 
       if (Array.isArray(liveList) && liveList.length > 0) {
@@ -166,12 +168,14 @@ export default function AdminDashboardPage() {
     try {
       const res = await apiSearchOpportunities({ page: nextPage, limit: 50 });
       const backendList =
-        res?.data?.opportunities || res?.opportunities || res?.data || [];
+        res?.data?.results ||
+        res?.data?.data?.results ||
+        res?.results ||
+        (Array.isArray(res?.data) ? res.data : []);
       const total =
         res?.data?.totalResults ??
-        res?.data?.total ??
+        res?.data?.data?.totalResults ??
         res?.totalResults ??
-        res?.total ??
         totalOpportunitiesCount;
 
       if (Array.isArray(backendList) && backendList.length > 0) {
@@ -667,14 +671,14 @@ export default function AdminDashboardPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
-                  Recently Added
+                  Recently Added & Updated
                 </h2>
                 {/* <span className="rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:text-cyan-300">
                   {totalOpportunitiesCount > 0 ? totalOpportunitiesCount : opportunities.length}
                 </span> */}
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Latest opportunities
+                Latest created and updated opportunities from database
               </p>
             </div>
             {opportunities.length > 0 && (

@@ -434,7 +434,10 @@ export default function MyApplicationsPage() {
         response?.data ||
         [];
 
-      const total = response?.data?.totalResults || results.length;
+      const total =
+        response?.data?.totalResults ??
+        response?.data?.data?.totalResults ??
+        results.length;
 
       setApplications(Array.isArray(results) ? results : []);
       setTotalResults(total);

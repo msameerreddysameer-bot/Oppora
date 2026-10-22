@@ -338,10 +338,11 @@ const getUserApplicationsAndsearchAndfilters = asyncHandler(
       });
     }
 
-    // Sort by newest created application when there is no search term
+    // Sort by newest updated or created application when there is no search term
     if (!queryTerm || queryTerm.trim() === "") {
       pipeline.push({
         $sort: {
+          "userApplication.updatedAt": -1,
           "userApplication.createdAt": -1,
         },
       });

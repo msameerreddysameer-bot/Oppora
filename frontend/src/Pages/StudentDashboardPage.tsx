@@ -336,30 +336,11 @@ export default function StudentDashboardPage(
       // Keep all live opportunities returned from the backend search
       const apiList = Array.isArray(results) ? results : [];
 
-      // Merge locally published opportunities if available
-      let localPubs: IOpportunity[] = [];
-      const localSaved = localStorage.getItem("admin_managed_opportunities");
-      if (localSaved) {
-        try {
-          localPubs = JSON.parse(localSaved).filter(
-            (o: IOpportunity) =>
-              o.publicationStatus === "published" ||
-              (!o.publicationStatus && o.status === "active")
-          );
-        } catch {
-          localPubs = [];
-        }
-      }
-
-      const existingIds = new Set(apiList.map((o) => o._id));
-      const uniqueLocals = localPubs.filter((o) => !existingIds.has(o._id));
-      const list = [...uniqueLocals, ...apiList];
-
-      setOpportunitiesList(list);
-      setTotalResults(total + uniqueLocals.length);
+      setOpportunitiesList(apiList);
+      setTotalResults(total);
       setPage(1);
       // Enable infinite scroll if there are remaining items to load
-      setHasMore(apiList.length < total && apiList.length >= 20);
+      setHasMore(apiList.length < total && apiList.length > 0);
     } catch (err: any) {
       if (
         err?.code === "ERR_NETWORK" ||

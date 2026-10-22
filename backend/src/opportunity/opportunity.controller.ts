@@ -322,7 +322,9 @@ const searchAndFilterOpportunity = asyncHandler(async (req, res) => {
   if (!queryTerm) {
     pipeline.push({
       $sort: {
+        updatedAt: -1,
         createdAt: -1,
+        _id: -1,
       },
     });
   }
@@ -384,9 +386,11 @@ const getOpportunitiesBystatus = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const opportunities = await Opportunity.find({ status: status })
-    .sort({ createdAt: -1 })
+    .sort({ updatedAt: -1, createdAt: -1, _id: -1 })
     .skip(skip)
     .limit(limit);
+
+  const totalResults = await Opportunity.countDocuments({ status: status });
 
   res.status(200).json(
     new ApiResponse(
@@ -395,7 +399,7 @@ const getOpportunitiesBystatus = asyncHandler(async (req, res) => {
         results: opportunities,
         page,
         limit,
-        totalResults: opportunities.length,
+        totalResults,
       },
       "opportunites based on status fetched successfully"
     )
