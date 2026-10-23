@@ -104,7 +104,7 @@ export default function OrganizationLogo({
   if (!imageSource || imgError) {
     return (
       <div
-        className={`flex items-center justify-center bg-gradient-to-br from-blue-600 to-indigo-700 font-bold text-white shadow-sm select-none ${variantConfig.textSize} ${wrapperClass} ${className}`}
+        className={`flex items-center justify-center bg-linear-to-br from-blue-600 to-indigo-700 font-bold text-white shadow-sm select-none ${variantConfig.textSize} ${wrapperClass} ${className}`}
         style={containerStyle}
         title={organization || "Organization"}
       >

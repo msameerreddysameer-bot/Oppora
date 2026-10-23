@@ -1466,7 +1466,7 @@ export default function MyApplicationsPage() {
               <button
                 type="button"
                 onClick={handleConfirmDelete}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-red-700"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-linear-to-r from-rose-600 to-red-600 px-4 py-2.5 text-xs font-semibold text-white shadow-md shadow-rose-500/20 transition hover:from-rose-700 hover:to-red-700"
               >
                 <Trash2 size={14} />
                 Delete application
@@ -1487,7 +1487,7 @@ export default function MyApplicationsPage() {
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
                 <CheckCircle2 size={16} />
               </div>
-              <div className="min-w-0 max-w-[200px] sm:max-w-xs">
+              <div className="min-w-0 max-w-50 sm:max-w-xs">
                 <p className="truncate text-xs font-medium text-slate-200">
                   {toast.message}
                 </p>

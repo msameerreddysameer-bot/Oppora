@@ -230,7 +230,7 @@ export default function AvatarCropModal({
         {/* Body / Cropper Viewport */}
         <div className="flex flex-col items-center bg-slate-950/5 p-5 dark:bg-slate-950/40">
           <div
-            className="relative flex h-[320px] w-[320px] select-none items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-inner dark:border-slate-700"
+            className="relative flex h-80 w-[320px] select-none items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-inner dark:border-slate-700"
             style={{ width: VIEWPORT_SIZE, height: VIEWPORT_SIZE }}
           >
             {/* Draggable Image Layer */}
