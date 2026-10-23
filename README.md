@@ -39,7 +39,7 @@
 - [Known Limitations & Current Scope](#known-limitations--current-scope)
 - [Future Roadmap](#future-roadmap)
 - [Contributing](#contributing)
-- [License](#license)
+
 
 ---
 
